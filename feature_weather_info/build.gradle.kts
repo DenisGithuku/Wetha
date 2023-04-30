@@ -34,16 +34,85 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
+    }
+    kotlin {
+        sourceSets.main {
+            kotlin.srcDir("build/generated/ksp/main/kotlin")
+        }
+        sourceSets.test {
+            kotlin.srcDir("build/generated/ksp/test/kotlin")
+        }
+    }
+}
+
+configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    debug.set(true)
+    verbose.set(true)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
+    ignoreFailures.set(true)
+    enableExperimentalRules.set(true)
+    disabledRules.set(setOf("final-newline", "no-wildcard-imports", "experimental:package-name", "annotation", "chain-wrapping"))
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.SARIF)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
     }
 }
 
 
 dependencies {
-    ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:${versions.ktorfit}")
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:${versions.ktorfit}")
+    implementation(libs.accompanistImage)
+    implementation(libs.activityCompose)
+    implementation(libs.androidCore)
+    implementation(libs.appCompat)
+
+    implementation(libs.datastorePrefs)
+    implementation(libs.flow)
+    implementation(libs.flowLifecycle)
+    implementation(libs.flowViewModel)
+
+    implementation(libs.lifecycleRuntime)
+    implementation(libs.lifecycleRuntimeCompose)
+    implementation(libs.lifecycleViewModelCompose)
+    implementation(libs.lifecycleViewModelCompose)
+    implementation(libs.lifecycleViewModelKtx)
+    implementation(libs.viewModelSavedState)
+
+    ksp(libs.ktorfitKsp)
+    implementation(libs.ktorFit)
+    implementation(libs.ktorLogger)
+    implementation(libs.ktorClient)
+    implementation(libs.ktorSerialization)
+    implementation(libs.ktorSerializationKotlinx)
+
+    implementation(libs.koin)
+    implementation(libs.koinAndroid)
+    ksp(libs.koinKsp)
+
+    implementation(libs.composeMaterial)
+    implementation(libs.compose_nav)
+    implementation(libs.composeTooling)
+    implementation(libs.composeUi)
+
+    testImplementation(libs.composeJunitTest)
+    testImplementation(libs.junitTest)
+    testImplementation(libs.truthUnitTest)
+    testImplementation(libs.jupiterUnitTest)
+    testImplementation(libs.lifefycleRuntimeTesting)
+    testImplementation(libs.koinJunitTest)
+    testImplementation(libs.koinJunitTest)
+
+    androidTestImplementation(libs.coreAndroidTest)
+    androidTestImplementation(libs.espressoAndroidTest)
+    androidTestImplementation(libs.junitAndroidTest)
+    androidTestImplementation(libs.truthAndroidTest)
+
+    debugImplementation(libs.composeUiTestManifest)
+    debugImplementation(libs.composeUiDebugTooling)
 }
