@@ -1,0 +1,1 @@
+/home/githukudenis/CodeFactory/Android/Wetha/buildSrc/build/classes/kotlin/main/libs.class:/home/githukudenis/CodeFactory/Android/Wetha/buildSrc/build/classes/kotlin/main/versions.class
