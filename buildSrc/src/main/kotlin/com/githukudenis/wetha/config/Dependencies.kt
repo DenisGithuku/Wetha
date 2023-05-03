@@ -1,6 +1,8 @@
 import versions.ktor
 
 object versions {
+    val okhttp = "4.10.0"
+    val retrofit = "2.9.0"
     val coroutines = "1.3.9"
     val lifecycle = "2.4.0"
     val timber = "5.0.1"
@@ -9,6 +11,7 @@ object versions {
     val koinKsp = "1.2.0"
     val koinAnnotations = "1.2.0"
     val compose_nav = "2.5.3"
+    val location = "21.0.1"
     val datastore = "1.0.0"
     val room = "2.5.1"
     val material = "1.0.1"
@@ -31,15 +34,23 @@ object libs {
     val koinAndroid = "io.insert-koin:koin-android:${versions.koin}"
     val koinAnnotations = "io.insert-koin:koin-annotations:${versions.koinAnnotations}"
     val koinKsp = "io.insert-koin:koin-ksp-compiler:${versions.koinKsp}"
+    val koinCompose = "io.insert-koin:koin-androidx-compose:${versions.koin}"
+
+    val retroFit = "com.squareup.retrofit2:retrofit:${versions.retrofit}"
+    val retrofitGson = "com.squareup.retrofit2:converter-gson:${versions.retrofit}"
+    val okhttpLogging = "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}"
 
     val appCompat = "androidx.appcompat:appcompat:1.4.1"
     val espressoAndroidTest = "androidx.test.espresso:espresso-core:3.5.1"
     val ktorFit = "de.jensklingenberg.ktorfit:ktorfit-lib:${versions.ktorfit}"
     val ktorfitKsp = "de.jensklingenberg.ktorfit:ktorfit-ksp:${versions.ktorfit}"
 
-    val ktorSerialization = "io.ktor:ktor-client-serialization:$ktor"
-    val ktorClient = "io.ktor:ktor-client-content-negotiation:$ktor"
+    val ktorSerialization = "io.ktor:ktor-client-serialization:${versions.ktor}"
+    val ktorClientCore = "io.ktor:ktor-client-core:${versions.ktor}"
+    val ktorClientCIO = "io.ktor:ktor-client-cio:${versions.ktor}"
+    val ktorContentNegotiation = "io.ktor:ktor-client-content-negotiation:$ktor"
     val ktorSerializationKotlinx = "io.ktor:ktor-serialization-kotlinx-json:$ktor"
+    val ktorSerializationGson = "io.ktor:ktor-serialization-gson:${versions.ktor}"
   
 
     val testRunner = "androidx.test:runner:1.5.2"
@@ -55,7 +66,7 @@ object libs {
         "androidx.compose.material:material-icons-extended:${versions.material}"
     val lifecycleRuntime = "androidx.lifecycle:lifecycle-runtime-ktx:${versions.lifecycle}"
     val lifecycleRuntimeCompose =
-        "androidx.lifecycle:lifecycle-runtime-compose:${versions.lifecycle}"
+        "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
     val lifecycleViewModelKtx = "androidx.lifecycle:lifecycle-viewmodel-ktx:${versions.lifecycle}"
     val activityCompose = "androidx.activity:activity-compose:1.6.1"
     val lifecycleViewModelCompose =
@@ -70,6 +81,7 @@ object libs {
     val roomCompiler = "androidx.room:room-compiler:${versions.room}"
     val accompanistImage =
         "com.google.accompanist:accompanist-drawablepainter:${versions.accompanist}"
+    val locationProvider = "com.google.android.gms:play-services-location:${versions.location}"
 
     // Koin Test features
     val koinUnitTest = "io.insert-koin:koin-test:${versions.koin}"

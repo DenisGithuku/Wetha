@@ -87,9 +87,10 @@ dependencies {
     implementation(libs.composeMaterial)
     implementation(libs.composeTooling)
     implementation(libs.composeUi)
-
+    implementation(libs.navigationCompose)
     implementation(libs.timber)
     implementation(libs.koin)
+    implementation(libs.koinCompose)
     implementation(libs.koinAndroid)
     implementation(libs.koinAnnotations)
     ksp(libs.koinKsp)

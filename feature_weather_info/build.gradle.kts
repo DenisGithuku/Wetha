@@ -1,8 +1,11 @@
+import org.jetbrains.kotlin.konan.properties.Properties
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.8.20-1.0.11"
     id("kotlin-parcelize")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.6.21"
     id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
     id("de.jensklingenberg.ktorfit") version "1.0.0"
 }
@@ -12,6 +15,10 @@ configure<de.jensklingenberg.ktorfit.gradle.KtorfitGradleConfiguration> {
     version = versions.ktorfit
 }
 
+val properties = Properties()
+properties.load(project.rootProject.file("local.properties").inputStream())
+val appId = properties.getProperty("appId")
+
 android {
     namespace = "com.githukudenis.feature_weather_info"
     compileSdk = 33
@@ -19,9 +26,19 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 33
+        buildConfigField("String", "appId", appId)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+    }
+
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.6"
     }
 
     buildTypes {
@@ -77,6 +94,11 @@ dependencies {
     implementation(libs.flowLifecycle)
     implementation(libs.flowViewModel)
 
+    implementation(libs.retroFit)
+    implementation(libs.retrofitGson)
+    implementation(libs.okhttpLogging)
+
+    implementation(libs.locationProvider)
     implementation(libs.lifecycleRuntime)
     implementation(libs.lifecycleRuntimeCompose)
     implementation(libs.lifecycleViewModelCompose)
@@ -86,13 +108,19 @@ dependencies {
 
     ksp(libs.ktorfitKsp)
     implementation(libs.ktorFit)
+
     implementation(libs.ktorLogger)
-    implementation(libs.ktorClient)
+    implementation(libs.ktorContentNegotiation)
     implementation(libs.ktorSerialization)
     implementation(libs.ktorSerializationKotlinx)
+    implementation(libs.ktorClientCore)
+    implementation(libs.ktorClientCIO)
+    implementation(libs.ktorSerializationGson)
 
     implementation(libs.koin)
     implementation(libs.koinAndroid)
+    implementation(libs.koinAnnotations)
+    implementation(libs.koinCompose)
     ksp(libs.koinKsp)
 
     implementation(libs.composeMaterial)
@@ -100,13 +128,16 @@ dependencies {
     implementation(libs.composeTooling)
     implementation(libs.composeUi)
 
+    implementation(libs.timber)
+
     testImplementation(libs.composeJunitTest)
     testImplementation(libs.junitTest)
     testImplementation(libs.truthUnitTest)
     testImplementation(libs.jupiterUnitTest)
     testImplementation(libs.lifefycleRuntimeTesting)
     testImplementation(libs.koinJunitTest)
-    testImplementation(libs.koinJunitTest)
+    testImplementation(libs.testRunner)
+
 
     androidTestImplementation(libs.coreAndroidTest)
     androidTestImplementation(libs.espressoAndroidTest)
