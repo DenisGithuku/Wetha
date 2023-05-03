@@ -1,9 +1,13 @@
+import versions.ktor
+
 object versions {
     val coroutines = "1.3.9"
     val lifecycle = "2.4.0"
     val timber = "5.0.1"
     val ktor = "2.3.0"
     val koin = "3.4.0"
+    val koinKsp = "1.2.0"
+    val koinAnnotations = "1.2.0"
     val compose_nav = "2.5.3"
     val datastore = "1.0.0"
     val room = "2.5.1"
@@ -23,11 +27,21 @@ object libs {
     val koin = "io.insert-koin:koin-android:${versions.koin}"
     val compose_nav = "androidx.navigation:navigation-compose:${versions.compose_nav}"
 
+    // Koin
+    val koinAndroid = "io.insert-koin:koin-android:${versions.koin}"
+    val koinAnnotations = "io.insert-koin:koin-annotations:${versions.koinAnnotations}"
+    val koinKsp = "io.insert-koin:koin-ksp-compiler:${versions.koinKsp}"
+
     val appCompat = "androidx.appcompat:appcompat:1.4.1"
     val espressoAndroidTest = "androidx.test.espresso:espresso-core:3.5.1"
-    val ktorfit = "de.jensklingenberg.ktorfit:ktorfit-ksp:${versions.ktorfit}"
+    val ktorFit = "de.jensklingenberg.ktorfit:ktorfit-lib:${versions.ktorfit}"
+    val ktorfitKsp = "de.jensklingenberg.ktorfit:ktorfit-ksp:${versions.ktorfit}"
+
+    val ktorSerialization = "io.ktor:ktor-client-serialization:$ktor"
+    val ktorClient = "io.ktor:ktor-client-content-negotiation:$ktor"
+    val ktorSerializationKotlinx = "io.ktor:ktor-serialization-kotlinx-json:$ktor"
   
-    // optional - Kotlin Extensions and Coroutines support for Room
+
     val testRunner = "androidx.test:runner:1.5.2"
     val roomKtx = "androidx.room:room-ktx:${versions.room}"
     val jupiterUnitTest = "org.junit.jupiter:junit-jupiter:5.8.1"
@@ -56,6 +70,12 @@ object libs {
     val roomCompiler = "androidx.room:room-compiler:${versions.room}"
     val accompanistImage =
         "com.google.accompanist:accompanist-drawablepainter:${versions.accompanist}"
+
+    // Koin Test features
+    val koinUnitTest = "io.insert-koin:koin-test:${versions.koin}"
+    // Koin for JUnit 4
+    val koinJunitTest =  "io.insert-koin:koin-test-junit4:${versions.koin}"
+
     val junitTest = "junit:junit:4.13.2"
     val lifefycleRuntimeTesting =
         "androidx.lifecycle:lifecycle-runtime-testing:${versions.lifecycle}"
@@ -64,8 +84,6 @@ object libs {
     val coreAndroidTest = "androidx.arch.core:core-testing:2.2.0"
     val truthAndroidTest = "androidx.test.ext:truth:1.5.0"
     val junitAndroidTest = "androidx.test.ext:junit:1.1.5"
-    val hiltAndroidTest = "com.google.dagger:hilt-android-testing:2.28-alpha"
-    val hiltAndroidCompilerTest = "com.google.dagger:hilt-android-compiler:2.38.1"
     val composeJunitTest = "androidx.compose.ui:ui-test-junit4:${versions.compose_ui}"
     val composeUiDebugTooling = "androidx.compose.ui:ui-tooling:${versions.compose_ui}"
     val composeUiTestManifest = "androidx.compose.ui:ui-test-manifest:${versions.compose_ui}"
