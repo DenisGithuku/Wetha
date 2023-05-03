@@ -24,7 +24,7 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         targetSdk = 33
         buildConfigField("String", "appId", appId)
 
