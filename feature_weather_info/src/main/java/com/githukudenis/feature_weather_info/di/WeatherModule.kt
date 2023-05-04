@@ -26,7 +26,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-val appModule = module {
+val weatherModule = module {
     single<FusedLocationProviderClient> {
         LocationServices.getFusedLocationProviderClient(androidContext())
     }
@@ -36,7 +36,7 @@ val appModule = module {
     }
 
     single<WeatherRepository> {
-        RemoteWeatherDataSource(get(), get(), get())
+        RemoteWeatherDataSource(get(), get())
     }
 
     single<UserPrefsRepository> {
@@ -53,7 +53,7 @@ val appModule = module {
     }
 
     viewModel {
-        TodayViewModel(get(), get(), get())
+        TodayViewModel(get(), get())
     }
 
     single<OpenWeatherApi> {
