@@ -95,6 +95,8 @@ dependencies {
     implementation(libs.flowLifecycle)
     implementation(libs.flowViewModel)
 
+    implementation(libs.systemUiController)
+
     implementation(libs.timber)
 
     implementation(libs.koin)

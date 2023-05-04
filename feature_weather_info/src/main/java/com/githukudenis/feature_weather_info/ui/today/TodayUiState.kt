@@ -1,7 +1,7 @@
 package com.githukudenis.feature_weather_info.ui.today
 
 import com.githukudenis.feature_weather_info.common.UserMessage
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 data class TodayUiState(
     val isLoading: Boolean = false,
@@ -13,7 +13,7 @@ data class TodayUiState(
 
 data class LocationState(
     val name: String? = null,
-    val date: LocalDateTime = LocalDateTime.now()
+    val date: LocalDate = LocalDate.now()
 )
 
 data class CurrentWeatherState(

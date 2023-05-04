@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.local.LocationClient
-import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -26,6 +25,7 @@ class TodayViewModel(
         viewModelScope.launch {
             locationClient.getCurrentLocationData().collectLatest { location ->
                 Timber.i(location.toString())
+                getLocationInfo(location)
                 getCurrentWeatherData(location)
             }
         }
@@ -103,6 +103,43 @@ class TodayViewModel(
                         }
                     }
                 }
+        }
+    }
+
+    private fun getLocationInfo(location: Location) {
+        viewModelScope.launch {
+            weatherRepository.getCurrentLocationInfo(location).collect { result ->
+                when (result) {
+                    is Resource.Error -> {
+                        val userMessage = UserMessage(
+                            id = 0,
+                            description = result.errorMessage
+                        )
+                        val userMessages = mutableListOf<UserMessage>().apply {
+                            this.add(userMessage)
+                        }
+                        state.update { oldState ->
+                            oldState.copy(
+                                isLoading = false,
+                                userMessages = userMessages
+                            )
+                        }
+                    }
+
+                    is Resource.Loading -> {
+                        state.update { oldState -> oldState.copy(isLoading = true) }
+                    }
+
+                    is Resource.Success -> {
+                        state.update { oldState ->
+                            val locationState = LocationState(result.data?.first()?.name)
+                            oldState.copy(
+                                locationState = locationState
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
