@@ -5,11 +5,15 @@ import kotlinx.coroutines.flow.Flow
 
 interface UserPrefsRepository {
     val userPrefs: Flow<UserPrefs>
-    suspend fun changeUserLocation(location: Location)
+    suspend fun changeTheme(theme: Theme)
 }
 
 data class UserPrefs(
-    val latitude: Double?,
-    val longitude: Double?
+    val theme: Theme? = Theme.LIGHT
 )
 
+enum class Theme {
+    LIGHT,
+    DARK,
+    SYSTEM
+}

@@ -4,17 +4,15 @@ import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
+import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.wetha.ui.theme.WethaTheme
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,25 +28,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             val snackbarHostState = SnackbarHostState()
             val navHostController = rememberNavController()
-            WethaTheme {
-                WethaNavigator(snackbarHostState = snackbarHostState, navHostController = navHostController)
+            val mainViewModel: MainViewModel = koinViewModel()
+            val appState by mainViewModel.appState.collectAsStateWithLifecycle()
+
+            WethaTheme(darkTheme = appState.appTheme == Theme.DARK) {
+                Surface {
+                    WethaNavigator(
+                        appTheme = appState.appTheme,
+                        onChangeAppTheme = { newTheme ->
+                            mainViewModel.onEvent(MainEvent.ChangeAppTheme(newTheme))
+                        },
+                        snackbarHostState = snackbarHostState,
+                        navHostController = navHostController
+                    )
+                }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WethaTheme {
-        Greeting("Android")
     }
 }

@@ -82,13 +82,21 @@ configure<de.jensklingenberg.ktorfit.gradle.KtorfitGradleConfiguration> {
 
 dependencies {
     implementation(project(":feature_weather_info"))
+
     implementation(libs.activityCompose)
     implementation(libs.appCompat)
+
     implementation(libs.composeMaterial)
     implementation(libs.composeTooling)
     implementation(libs.composeUi)
     implementation(libs.navigationCompose)
+    implementation(libs.lifecycleRuntimeCompose)
+    implementation(libs.lifecycleViewModelCompose)
+    implementation(libs.flowLifecycle)
+    implementation(libs.flowViewModel)
+
     implementation(libs.timber)
+
     implementation(libs.koin)
     implementation(libs.koinCompose)
     implementation(libs.koinAndroid)

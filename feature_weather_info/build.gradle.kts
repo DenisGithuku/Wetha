@@ -123,10 +123,10 @@ dependencies {
     implementation(libs.koinCompose)
     ksp(libs.koinKsp)
 
-    implementation(libs.composeMaterial)
     implementation(libs.compose_nav)
     implementation(libs.composeTooling)
     implementation(libs.composeUi)
+    implementation(libs.composeMaterial)
 
     implementation(libs.timber)
 

@@ -1,7 +1,7 @@
 package com.githukudenis.wetha
 
 import android.app.Application
-import com.githukudenis.feature_weather_info.di.appModule
+import com.githukudenis.feature_weather_info.di.weatherModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -18,7 +18,7 @@ class WethaApplication : Application() {
         startKoin {
             androidLogger()
             androidContext(this@WethaApplication)
-            modules(appModule)
+            modules(listOf(weatherModule, appModule))
         }
     }
 }

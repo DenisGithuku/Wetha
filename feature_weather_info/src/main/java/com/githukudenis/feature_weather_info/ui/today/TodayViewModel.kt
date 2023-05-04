@@ -1,5 +1,6 @@
 package com.githukudenis.feature_weather_info.ui.today
 
+import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.githukudenis.feature_weather_info.common.Resource
@@ -9,43 +10,46 @@ import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class TodayViewModel(
     private val weatherRepository: WeatherRepository,
-    private val locationClient: LocationClient,
-    private val userPrefsRepository: UserPrefsRepository
+    private val locationClient: LocationClient
 ) : ViewModel() {
 
     var state = MutableStateFlow(TodayUiState())
         private set
 
     init {
-        getUserLocation()
-        getCurrentWeatherData()
-    }
-
-    private fun getUserLocation() {
         viewModelScope.launch {
-            locationClient.getCurrentLocationData()
-                .distinctUntilChanged()
-                .collectLatest { location ->
-                    val latestUserLocation = Pair(location.latitude, location.longitude)
-                    userPrefsRepository.userPrefs.collectLatest { userPrefs ->
-                        val storeLocation = Pair(userPrefs.latitude, userPrefs.longitude)
-                        if (latestUserLocation != storeLocation) {
-                            userPrefsRepository.changeUserLocation(location)
-                        }
-                    }
-                }
+            locationClient.getCurrentLocationData().collectLatest { location ->
+                Timber.i(location.toString())
+                getCurrentWeatherData(location)
+            }
         }
     }
 
-    private fun getCurrentWeatherData() {
+    fun onEvent(event: TodayUiEvent) {
+        when (event) {
+            is TodayUiEvent.OnShowUserMessage -> {
+                clearUserMessage(event.messageId)
+            }
+        }
+    }
+
+    private fun clearUserMessage(messageId: Int) {
+        val userMessages =
+            state.value.userMessages.filterNot { userMessage -> userMessage.id == messageId }
+        state.update { oldState ->
+            oldState.copy(userMessages = userMessages)
+        }
+    }
+
+    private fun getCurrentWeatherData(location: Location) {
         viewModelScope.launch {
-            weatherRepository.getCurrentWeather()
+            weatherRepository.getCurrentWeather(location)
                 .collectLatest { result ->
                     when (result) {
                         is Resource.Error -> {
