@@ -33,7 +33,7 @@ val weatherModule = module {
     }
 
     single<LocationClient> {
-        DefaultLocationClient(androidContext(), get())
+        DefaultLocationClient(androidContext(), get(), get())
     }
 
     single<WeatherRepository> {
@@ -54,7 +54,7 @@ val weatherModule = module {
     }
 
     viewModel {
-        TodayViewModel(get(), get())
+        TodayViewModel(get(), get(), get())
     }
 
     single<OpenWeatherApi> {

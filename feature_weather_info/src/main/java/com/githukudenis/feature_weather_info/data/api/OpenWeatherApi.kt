@@ -3,6 +3,7 @@ package com.githukudenis.feature_weather_info.data.api
 import com.githukudenis.feature_weather_info.BuildConfig
 import com.githukudenis.feature_weather_info.data.model.LocationInfoResponse
 import com.githukudenis.feature_weather_info.data.model.WeatherResponse
+import com.githukudenis.feature_weather_info.data.repository.Units
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Query
 import io.ktor.client.plugins.logging.*
@@ -12,7 +13,8 @@ interface OpenWeatherApi {
     suspend fun getCurrentWeatherAndForecastData(
         @Query("appid") appId: String = BuildConfig.appId,
         @Query("lat") lat: Double,
-        @Query("lon") lon: Double
+        @Query("lon") lon: Double,
+        @Query("units") units: String = Units.STANDARD.name
     ): WeatherResponse
 
     @GET("geo/1.0/reverse")
