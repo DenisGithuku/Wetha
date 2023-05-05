@@ -26,7 +26,6 @@ import com.githukudenis.feature_weather_info.R
 @Composable
 fun CurrentWeatherItem(
     @DrawableRes icon: Int,
-    imageDescription: String,
     temp: String,
     main: String
 ) {
@@ -44,7 +43,7 @@ fun CurrentWeatherItem(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(painter = painterResource(id = icon), contentDescription = imageDescription)
+        Image(painter = painterResource(id = icon), contentDescription = "Weather icon")
         Text(
             text = buildAnnotatedString {
                 append(temp)
@@ -72,7 +71,6 @@ fun CurrentWeatherItemPreview() {
     MaterialTheme {
         CurrentWeatherItem(
             icon = R.drawable.snowy_bulk,
-            imageDescription = "Snowy",
             temp = "36",
             main = "Thunder Overcast"
         )
