@@ -4,7 +4,9 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
@@ -21,8 +23,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.githukudenis.feature_weather_info.data.repository.Theme
+import com.githukudenis.feature_weather_info.ui.today.components.CurrentWeatherItem
 import com.githukudenis.feature_weather_info.ui.today.components.LocationContainer
 import com.githukudenis.feature_weather_info.ui.today.components.TopRow
+import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
+import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -93,6 +98,35 @@ private fun TodayScreen(
                 name = it,
                 date = date
             )
+        }
+        val icon: Int? = todayUiState.currentWeatherState.icon?.let { iconId ->
+            WeatherIconMapper.icons.find {
+                it.first == iconId
+            }?.second
+        }
+        icon?.let { iconId ->
+            CurrentWeatherItem(
+                icon = iconId,
+                temp = todayUiState.currentWeatherState.temperature.toString(),
+                main = todayUiState.currentWeatherState.main.toString()
+            )
+        }
+
+        Row (
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            WeatherInfoItem(
+                title = "Temp",
+                value = todayUiState.currentWeatherState.temperature.toString(),
+                tempInfoItem = true
+            )
+            WeatherInfoItem(
+                title = "Wind",
+                value = "${todayUiState.currentWeatherState.windSpeed} "
+            )
+            WeatherInfoItem(title = "Humidity", value = " ${todayUiState.currentWeatherState.humidity} %")
         }
     }
 }
