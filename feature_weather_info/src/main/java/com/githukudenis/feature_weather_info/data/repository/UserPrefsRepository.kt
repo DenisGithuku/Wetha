@@ -11,7 +11,7 @@ interface UserPrefsRepository {
 
 data class UserPrefs(
     val theme: Theme? = Theme.LIGHT,
-    val units: Units? = Units.STANDARD
+    val units: Units? = null
 )
 
 enum class Theme {
