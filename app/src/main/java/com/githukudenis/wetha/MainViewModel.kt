@@ -27,13 +27,6 @@ class MainViewModel(
             is MainEvent.ChangeAppTheme -> {
                 changeAppTheme(event.newTheme)
             }
-
-            is MainEvent.ChangeUnits -> {
-                if (appState.value.units == event.newUnits) {
-                    return
-                }
-                changeUnits(event.newUnits)
-            }
         }
     }
 
@@ -42,8 +35,7 @@ class MainViewModel(
             userPrefsRepository.userPrefs.collectLatest { prefs ->
                 appState.update { oldState ->
                     oldState.copy(
-                        appTheme = prefs.theme ?: Theme.LIGHT,
-                        units = prefs.units
+                        appTheme = prefs.theme ?: Theme.LIGHT
                     )
                 }
             }
@@ -53,12 +45,6 @@ class MainViewModel(
     private fun changeAppTheme(newTheme: Theme) {
         viewModelScope.launch {
             userPrefsRepository.changeTheme(newTheme)
-        }
-    }
-
-    private fun changeUnits(units: Units) {
-        viewModelScope.launch {
-            userPrefsRepository.changeUnits(units)
         }
     }
 }

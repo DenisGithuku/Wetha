@@ -54,66 +54,12 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = SnackbarHostState()
             val navHostController = rememberNavController()
 
-            val systemUiController = rememberSystemUiController()
-            val useDarkIcons = !isSystemInDarkTheme()
-
-            DisposableEffect(systemUiController, useDarkIcons) {
-                systemUiController.setSystemBarsColor(
-                    color = Color.Transparent,
-                    darkIcons = useDarkIcons
-                )
-
-                onDispose { }
-            }
-
             val mainViewModel: MainViewModel = koinViewModel()
             val appState by mainViewModel.appState.collectAsStateWithLifecycle()
 
 
             WethaTheme(darkTheme = appState.appTheme == Theme.DARK) {
                 Surface {
-                    if (appState.units == null) {
-
-                        val units = listOf(
-                            Units.STANDARD,
-                            Units.IMPERIAL,
-                            Units.METRIC,
-                        )
-                        var selectedUnit by remember {
-                            mutableStateOf(units.first())
-                        }
-                        Dialog(
-                            onDismissRequest = {
-                                mainViewModel.onEvent(MainEvent.ChangeUnits(selectedUnit))
-                            }
-                        ) {
-                            Box {
-                                LazyColumn {
-                                    item {
-                                        Text(
-                                            text = "Select unit",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Divider()
-                                    }
-                                    items(items = units) {
-                                        Row(modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically ) {
-                                            RadioButton(
-                                                selected = selectedUnit == it,
-                                                onClick = { selectedUnit = it })
-                                            Text(
-                                                text = it.name.replaceFirstChar { it.uppercase() },
-                                                style = MaterialTheme.typography.labelMedium
-                                            )
-                                        }
-
-                                    }
-                                }
-                            }
-                        }
-                        return@Surface
-                    }
                     WethaNavigator(
                         appTheme = appState.appTheme,
                         onChangeAppTheme = { newTheme ->

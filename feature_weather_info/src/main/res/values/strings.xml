@@ -3,4 +3,6 @@
     <string name="menu_icon">Menu</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>
+    <string name="unit_dialog_title">Preferred units</string>
+    <string name="ok">Ok</string>
 </resources>
