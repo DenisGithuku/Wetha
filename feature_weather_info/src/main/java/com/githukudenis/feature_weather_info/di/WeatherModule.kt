@@ -10,6 +10,7 @@ import com.githukudenis.feature_weather_info.data.repository.RemoteWeatherDataSo
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
+import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -32,7 +33,7 @@ val weatherModule = module {
     }
 
     single<LocationClient> {
-        DefaultLocationClient(androidContext(), get())
+        DefaultLocationClient(androidContext(), get(), get())
     }
 
     single<WeatherRepository> {
@@ -53,7 +54,7 @@ val weatherModule = module {
     }
 
     viewModel {
-        TodayViewModel(get(), get())
+        TodayViewModel(get(), get(), get())
     }
 
     single<OpenWeatherApi> {

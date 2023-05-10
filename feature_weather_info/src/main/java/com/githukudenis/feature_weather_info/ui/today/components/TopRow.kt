@@ -1,6 +1,7 @@
 package com.githukudenis.feature_weather_info.ui.today.components
 
 import android.content.res.Configuration
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -73,7 +74,10 @@ fun TopRow(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .size(32.dp)
-                    .background(color = if (appTheme == Theme.LIGHT) Color(0xFF1471FD) else Color.Transparent, shape = CircleShape)
+                    .background(
+                        color = if (appTheme == Theme.LIGHT) Color(0xFF1471FD) else Color.Transparent,
+                        shape = CircleShape
+                    )
                     .padding(4.dp)
 
             )
@@ -83,7 +87,10 @@ fun TopRow(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .size(32.dp)
-                    .background(color = if (appTheme == Theme.DARK) Color(0xFF1471FD) else Color.Transparent, shape = CircleShape)
+                    .background(
+                        color = if (appTheme == Theme.DARK) Color(0xFF1471FD) else Color.Transparent,
+                        shape = CircleShape
+                    )
                     .padding(4.dp)
             )
         }

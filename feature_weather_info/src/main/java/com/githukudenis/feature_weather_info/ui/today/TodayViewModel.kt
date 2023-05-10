@@ -6,15 +6,21 @@ import androidx.lifecycle.viewModelScope
 import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.local.LocationClient
+import com.githukudenis.feature_weather_info.data.repository.Units
+import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(
     private val weatherRepository: WeatherRepository,
+    private val userPrefsRepository: UserPrefsRepository,
     private val locationClient: LocationClient
 ) : ViewModel() {
 
@@ -23,11 +29,23 @@ class TodayViewModel(
 
     init {
         viewModelScope.launch {
-            locationClient.getCurrentLocationData().collectLatest { location ->
-                Timber.i(location.toString())
-                getLocationInfo(location)
-                getCurrentWeatherData(location)
+            combine(
+                userPrefsRepository.userPrefs,
+                locationClient.getCurrentLocationData()
+            ) { prefs, location ->
+                Pair(location, prefs.units)
             }
+                .distinctUntilChanged()
+                .collectLatest {
+                    if (it.second == null) {
+                        state.update { oldState ->
+                            oldState.copy(shouldAskForUnits = true)
+                        }
+                    } else {
+                        getLocationInfo(it.first)
+                        getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
+                    }
+                }
         }
     }
 
@@ -35,6 +53,16 @@ class TodayViewModel(
         when (event) {
             is TodayUiEvent.OnShowUserMessage -> {
                 clearUserMessage(event.messageId)
+            }
+
+            is TodayUiEvent.ChangeUnits -> {
+                viewModelScope.launch {
+                    userPrefsRepository.changeUnits(event.units).also {
+                        state.update { oldState ->
+                            oldState.copy(shouldAskForUnits = false)
+                        }
+                    }
+                }
             }
         }
     }
@@ -47,9 +75,9 @@ class TodayViewModel(
         }
     }
 
-    private fun getCurrentWeatherData(location: Location) {
+    private fun getCurrentWeatherData(location: Location, units: Units) {
         viewModelScope.launch {
-            weatherRepository.getCurrentWeather(location)
+            weatherRepository.getCurrentWeather(location, units)
                 .collectLatest { result ->
                     when (result) {
                         is Resource.Error -> {

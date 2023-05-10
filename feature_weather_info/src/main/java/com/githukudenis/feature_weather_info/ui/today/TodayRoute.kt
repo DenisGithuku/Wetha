@@ -1,14 +1,21 @@
 package com.githukudenis.feature_weather_info.ui.today
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,12 +24,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.githukudenis.feature_weather_info.R
 import com.githukudenis.feature_weather_info.data.repository.Theme
+import com.githukudenis.feature_weather_info.data.repository.Units
+import com.githukudenis.feature_weather_info.ui.today.components.CurrentWeatherItem
+import com.githukudenis.feature_weather_info.ui.today.components.JumpingBubblesIndicator
 import com.githukudenis.feature_weather_info.ui.today.components.LocationContainer
 import com.githukudenis.feature_weather_info.ui.today.components.TopRow
+import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
+import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -34,6 +51,74 @@ fun TodayRoute(
     onChangeAppTheme: (Theme) -> Unit
 ) {
     val uiState by todayViewModel.state.collectAsStateWithLifecycle()
+    var selectedUnits by remember {
+        mutableStateOf(Units.STANDARD)
+    }
+
+    val units = listOf(
+        Units.METRIC,
+        Units.STANDARD,
+        Units.IMPERIAL,
+    )
+    val dialogProperties =
+        DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+
+
+    if (uiState.shouldAskForUnits) {
+        // Ask for units
+        Dialog(
+            onDismissRequest = {
+                todayViewModel.onEvent(TodayUiEvent.ChangeUnits(selectedUnits))
+            }, properties = dialogProperties
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    val context = LocalContext.current
+
+                    Text(
+                        text = context.getString(R.string.unit_dialog_title),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    units.forEach {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = it.name.lowercase().replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            RadioButton(
+                                selected = it == selectedUnits,
+                                onClick = { selectedUnits = it })
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            todayViewModel.onEvent(TodayUiEvent.ChangeUnits(selectedUnits))
+                        }
+                    ) {
+                        Text(
+                            text = context.getString(R.string.ok)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 
     TodayScreen(
         todayUiState = uiState,
@@ -64,12 +149,6 @@ private fun TodayScreen(
         LocalDate.now()
     )
 
-    if (todayUiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    }
-
     LaunchedEffect(todayUiState.userMessages) {
         if (todayUiState.userMessages.isNotEmpty()) {
             val userMessage = todayUiState.userMessages.first()
@@ -88,11 +167,63 @@ private fun TodayScreen(
         TopRow(appTheme = appTheme, onOpenMenu = {
             menuOpen = !menuOpen
         }, onChangeTheme = onChangeTheme)
+
+        if (todayUiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                JumpingBubblesIndicator()
+            }
+            return
+        }
+
+
         todayUiState.locationState.name?.let {
             LocationContainer(
                 name = it,
                 date = date
             )
+        }
+        val icon: Int? = todayUiState.currentWeatherState.icon?.let { iconId ->
+            WeatherIconMapper.icons.find {
+                it.first == iconId
+            }?.second
+        }
+        icon?.let { iconId ->
+            CurrentWeatherItem(
+                icon = iconId,
+                temp = todayUiState.currentWeatherState.temperature.toString(),
+                main = todayUiState.currentWeatherState.main.toString()
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            todayUiState.currentWeatherState.temperature?.let {
+                WeatherInfoItem(
+                    title = "Temp",
+                    value = it.toString(),
+                    tempInfoItem = true
+                )
+            }
+            todayUiState.currentWeatherState.windSpeed?.let {
+                WeatherInfoItem(
+                    title = "Wind",
+                    value = "$it"
+                )
+            }
+            todayUiState.currentWeatherState.humidity?.let {
+                WeatherInfoItem(
+                    title = "Humidity",
+                    value = " $it %"
+                )
+            }
         }
     }
 }

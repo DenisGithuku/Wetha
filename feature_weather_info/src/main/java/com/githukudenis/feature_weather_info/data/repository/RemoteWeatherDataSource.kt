@@ -21,7 +21,8 @@ class RemoteWeatherDataSource(
 ) : WeatherRepository {
 
     override suspend fun getCurrentWeather(
-        location: Location
+        location: Location,
+        units: Units
     ): Flow<Resource<WeatherResponse>> {
         return flow {
             try {
@@ -29,7 +30,8 @@ class RemoteWeatherDataSource(
                 val response =
                     openWeatherApi.getCurrentWeatherAndForecastData(
                         lat = location.latitude,
-                        lon = location.longitude
+                        lon = location.longitude,
+                        units = units.name
                     )
                 Timber.i(response.toString())
                 emit(Resource.Success(response))
