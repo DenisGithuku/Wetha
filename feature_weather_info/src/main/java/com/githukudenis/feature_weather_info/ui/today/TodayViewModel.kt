@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,10 +34,18 @@ class TodayViewModel(
                 locationClient.getCurrentLocationData()
             ) { prefs, location ->
                 Pair(location, prefs.units)
-            }.collectLatest {
-                getLocationInfo(it.first)
-                getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
             }
+                .distinctUntilChanged()
+                .collectLatest {
+                    if (it.second == null) {
+                        state.update { oldState ->
+                            oldState.copy(shouldAskForUnits = true)
+                        }
+                    } else {
+                        getLocationInfo(it.first)
+                        getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
+                    }
+                }
         }
     }
 
@@ -44,6 +53,16 @@ class TodayViewModel(
         when (event) {
             is TodayUiEvent.OnShowUserMessage -> {
                 clearUserMessage(event.messageId)
+            }
+
+            is TodayUiEvent.ChangeUnits -> {
+                viewModelScope.launch {
+                    userPrefsRepository.changeUnits(event.units).also {
+                        state.update { oldState ->
+                            oldState.copy(shouldAskForUnits = false)
+                        }
+                    }
+                }
             }
         }
     }
