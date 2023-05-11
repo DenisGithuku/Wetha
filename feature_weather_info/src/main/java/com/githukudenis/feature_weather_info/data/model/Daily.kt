@@ -1,8 +1,5 @@
 package com.githukudenis.feature_weather_info.data.model
 
-import kotlinx.serialization.Serializable
-
-
 data class Daily(
     val clouds: Int,
     val dew_point: Double,

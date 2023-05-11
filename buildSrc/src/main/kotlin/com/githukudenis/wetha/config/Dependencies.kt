@@ -14,7 +14,7 @@ object versions {
     val location = "21.0.1"
     val datastore = "1.0.0"
     val room = "2.5.1"
-    val material = "1.0.1"
+    val material = "1.1.0"
     val gson = "2.9.0"
     val compose_ui = "1.4.2"
     val accompanist = "0.28.0"

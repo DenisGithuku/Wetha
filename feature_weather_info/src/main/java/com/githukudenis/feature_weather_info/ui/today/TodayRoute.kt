@@ -1,14 +1,20 @@
 package com.githukudenis.feature_weather_info.ui.today
 
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -40,7 +48,10 @@ import com.githukudenis.feature_weather_info.ui.today.components.LocationContain
 import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -162,7 +173,7 @@ private fun TodayScreen(
 
     Column(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         TopRow(appTheme = appTheme, onOpenMenu = {
             menuOpen = !menuOpen
@@ -223,6 +234,70 @@ private fun TodayScreen(
                     title = "Humidity",
                     value = " $it %"
                 )
+            }
+        }
+        HourlySection(hourLyForeCast = todayUiState.hourlyForeCastState.foreCast)
+    }
+}
+
+@Composable
+fun HourlySection(
+    hourLyForeCast: List<ForeCast>
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Today",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "See full report",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(hourLyForeCast) { weatherInfo ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val icon = weatherInfo.icon.run {
+                        WeatherIconMapper.icons.find {
+                            it.first == this
+                        }
+                    }?.second
+                    icon?.let { ic ->
+                        Image(
+                            painter = painterResource(id = ic),
+                            contentDescription = "Weather icon",
+                            modifier = Modifier.size(40.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    weatherInfo.time?.let { time ->
+                        val formatter = DateTimeFormatter.ofPattern("hh mm:a")
+                        val formattedTime =
+                            LocalDateTime.ofInstant(
+                                Instant.ofEpochMilli(time.toLong()),
+                                ZoneId.systemDefault()
+                            ).format(formatter)
+
+                        Text(
+                            text = formattedTime,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                    Text(
+                        text = "${weatherInfo.temperature}",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             }
         }
     }
