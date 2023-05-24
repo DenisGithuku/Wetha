@@ -42,6 +42,9 @@ class TodayViewModel(
                             oldState.copy(shouldAskForUnits = true)
                         }
                     } else {
+                        state.update { oldState ->
+                            oldState.copy(selectedUnits = it.second)
+                        }
                         getLocationInfo(it.first)
                         getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
                     }
@@ -59,7 +62,7 @@ class TodayViewModel(
                 viewModelScope.launch {
                     userPrefsRepository.changeUnits(event.units).also {
                         state.update { oldState ->
-                            oldState.copy(shouldAskForUnits = false)
+                            oldState.copy(selectedUnits = event.units, shouldAskForUnits = false)
                         }
                     }
                 }
