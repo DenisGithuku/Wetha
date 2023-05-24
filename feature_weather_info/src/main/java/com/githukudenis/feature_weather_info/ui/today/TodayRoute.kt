@@ -15,18 +15,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,12 +57,15 @@ import com.githukudenis.feature_weather_info.ui.today.components.LocationContain
 import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayRoute(
     snackbarHostState: SnackbarHostState,
@@ -62,9 +74,6 @@ fun TodayRoute(
     onChangeAppTheme: (Theme) -> Unit
 ) {
     val uiState by todayViewModel.state.collectAsStateWithLifecycle()
-    var selectedUnits by remember {
-        mutableStateOf(Units.STANDARD)
-    }
 
     val units = listOf(
         Units.METRIC,
@@ -74,12 +83,17 @@ fun TodayRoute(
     val dialogProperties =
         DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
 
+    val scope = rememberCoroutineScope()
+
+    val modalBottomSheetShate = rememberModalBottomSheetState()
+
 
     if (uiState.shouldAskForUnits) {
         // Ask for units
         Dialog(
             onDismissRequest = {
-                todayViewModel.onEvent(TodayUiEvent.ChangeUnits(selectedUnits))
+                uiState.selectedUnits?.let { TodayUiEvent.ChangeUnits(it) }
+                    ?.let { todayViewModel.onEvent(it) }
             }, properties = dialogProperties
         ) {
             Box(
@@ -112,18 +126,72 @@ fun TodayRoute(
                                 style = MaterialTheme.typography.labelMedium
                             )
                             RadioButton(
-                                selected = it == selectedUnits,
-                                onClick = { selectedUnits = it })
+                                selected = it == uiState.selectedUnits,
+                                onClick = { todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it)) })
                         }
                     }
                     Button(
                         onClick = {
-                            todayViewModel.onEvent(TodayUiEvent.ChangeUnits(selectedUnits))
+                            uiState.selectedUnits?.let {
+                                TodayUiEvent.ChangeUnits(
+                                    it
+                                )
+                            }?.let { todayViewModel.onEvent(it) }
                         }
                     ) {
                         Text(
                             text = context.getString(R.string.ok)
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    if (modalBottomSheetShate.isVisible) {
+        ModalBottomSheet(
+            sheetState = modalBottomSheetShate,
+            onDismissRequest = {
+                scope.launch {
+                    modalBottomSheetShate.hide()
+                }
+            }) {
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                val context = LocalContext.current
+
+                Text(
+                    text = context.getString(R.string.unit_dialog_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    items(items = units) {
+                        FilterChip(
+                            selected = it == uiState.selectedUnits,
+                            leadingIcon = {
+                                if (it == uiState.selectedUnits) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_check),
+                                        contentDescription = "Selected"
+                                    )
+                                }
+                            },
+                            shape = RoundedCornerShape(32.dp),
+                            onClick = {
+                                todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                            },
+                            label = {
+                                Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
+                            })
                     }
                 }
             }
@@ -136,6 +204,15 @@ fun TodayRoute(
         appTheme = appTheme,
         onChangeTheme = onChangeAppTheme,
         snackbarHostState = snackbarHostState,
+        onOpenOptions = {
+            scope.launch {
+                if (modalBottomSheetShate.isVisible) {
+                    modalBottomSheetShate.hide()
+                } else {
+                    modalBottomSheetShate.show()
+                }
+            }
+        },
         onShowUserMessage = { messageId ->
             todayViewModel.onEvent(TodayUiEvent.OnShowUserMessage(messageId))
         })
@@ -147,12 +224,10 @@ private fun TodayScreen(
     snackbarHostState: SnackbarHostState,
     todayUiState: TodayUiState,
     appTheme: Theme,
+    onOpenOptions: () -> Unit,
     onChangeTheme: (Theme) -> Unit,
     onShowUserMessage: (Int) -> Unit
 ) {
-    var menuOpen by remember {
-        mutableStateOf(false)
-    }
 
     val dateFormatter = DateTimeFormatter
         .ofPattern("MMM d, yyyy")
@@ -172,12 +247,12 @@ private fun TodayScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TopRow(appTheme = appTheme, onOpenMenu = {
-            menuOpen = !menuOpen
-        }, onChangeTheme = onChangeTheme)
+        TopRow(appTheme = appTheme, onOpenMenu = onOpenOptions, onChangeTheme = onChangeTheme)
 
         if (todayUiState.isLoading) {
             Box(
@@ -263,7 +338,7 @@ fun HourlySection(
         }
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(hourLyForeCast) { weatherInfo ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -285,7 +360,7 @@ fun HourlySection(
                         val formattedTime =
                             LocalDateTime.ofInstant(
                                 Instant.ofEpochMilli(time.toLong()),
-                                ZoneId.systemDefault()
+                                ZoneOffset.UTC
                             ).format(formatter)
 
                         Text(
@@ -318,6 +393,7 @@ fun TodayRoutePreview() {
             appTheme = Theme.DARK,
             onChangeTheme = {},
             onShowUserMessage = {},
+            onOpenOptions = {},
             snackbarHostState = SnackbarHostState()
         )
     }

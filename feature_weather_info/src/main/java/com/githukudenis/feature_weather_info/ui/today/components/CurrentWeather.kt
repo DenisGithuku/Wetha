@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +44,11 @@ fun CurrentWeatherItem(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(painter = painterResource(id = icon), contentDescription = "Weather icon")
+        Image(
+            painter = painterResource(id = icon),
+            modifier = Modifier.size(200.dp),
+            contentDescription = "Weather icon"
+        )
         Text(
             text = buildAnnotatedString {
                 append(temp)
