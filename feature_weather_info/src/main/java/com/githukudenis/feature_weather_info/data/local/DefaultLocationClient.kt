@@ -26,18 +26,8 @@ class DefaultLocationClient(
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocationData(): Flow<Location> {
         return callbackFlow {
-            if (!context.hasLocationPermission()) {
-                throw LocationClient.LocationException("Location permission must be granted!")
-            }
             val locationManager =
                 context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            val isNetworkEnabled =
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
-            if (!isGpsEnabled && !isNetworkEnabled) {
-                throw LocationClient.LocationException("GPS disabled")
-            }
 
             val locationRequest = LocationRequest.create()
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)

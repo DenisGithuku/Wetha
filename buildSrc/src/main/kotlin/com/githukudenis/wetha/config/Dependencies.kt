@@ -82,6 +82,7 @@ object libs {
     val accompanistImage =
         "com.google.accompanist:accompanist-drawablepainter:${versions.accompanist}"
     val locationProvider = "com.google.android.gms:play-services-location:${versions.location}"
+    val accompanistPermissions = "com.google.accompanist:accompanist-permissions:${versions.accompanist}"
 
     // Koin Test features
     val koinUnitTest = "io.insert-koin:koin-test:${versions.koin}"

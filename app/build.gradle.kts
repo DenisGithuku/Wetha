@@ -96,6 +96,7 @@ dependencies {
     implementation(libs.flowViewModel)
 
     implementation(libs.systemUiController)
+    implementation(libs.accompanistPermissions)
 
     implementation(libs.timber)
 
