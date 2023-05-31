@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -33,10 +33,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +42,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -60,12 +61,11 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -232,11 +232,9 @@ private fun TodayScreen(
     onShowUserMessage: (Int) -> Unit
 ) {
 
-    val dateFormatter = DateTimeFormatter
-        .ofPattern("MMM d, yyyy")
-    val date = dateFormatter.format(
-        LocalDate.now()
-    )
+    val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    dateFormat.timeZone = TimeZone.getDefault()
+    val date = dateFormat.format(Date())
 
     LaunchedEffect(todayUiState.userMessages) {
         if (todayUiState.userMessages.isNotEmpty()) {
@@ -255,11 +253,13 @@ private fun TodayScreen(
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White,
                         Color(0xFFE4EEF8),
+                        Color.White
                     )
                 )
             )
+            .systemBarsPadding()
+            .padding(12.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -268,8 +268,7 @@ private fun TodayScreen(
         if (todayUiState.isLoading) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 JumpingBubblesIndicator()
@@ -330,7 +329,9 @@ private fun TodayScreen(
 fun HourlySection(
     hourLyForeCast: List<ForeCast>
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -342,50 +343,66 @@ fun HourlySection(
             )
             Text(
                 text = "See full report",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                )
+                style = MaterialTheme.typography.labelMedium
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
+
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(hourLyForeCast) { weatherInfo ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val icon = weatherInfo.icon.run {
-                        WeatherIconMapper.icons.find {
-                            it.first == this
+                Box(
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.extraLarge)
+                        .background(Color(0xFFE4EEF8))
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
+                    ) {
+                        val icon = weatherInfo.icon.run {
+                            WeatherIconMapper.icons.find {
+                                it.first == this
+                            }
+                        }?.second
+                        icon?.let { ic ->
+                            Image(
+                                painter = painterResource(id = ic),
+                                contentDescription = "Weather icon",
+                                modifier = Modifier.size(40.dp),
+                                contentScale = ContentScale.Crop
+                            )
                         }
-                    }?.second
-                    icon?.let { ic ->
-                        Image(
-                            painter = painterResource(id = ic),
-                            contentDescription = "Weather icon",
-                            modifier = Modifier.size(40.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    weatherInfo.time?.let { time ->
-                        val formatter = DateTimeFormatter.ofPattern("hh mm:a")
-                        val formattedTime =
-                            LocalDateTime.ofInstant(
-                                Instant.ofEpochMilli(time.toLong()),
-                                ZoneOffset.UTC
-                            ).format(formatter)
+                        weatherInfo.time?.let { time ->
+                            val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            formatter.timeZone = TimeZone.getDefault()
+                            val date = Date(time * 1000L)
+                            val formattedTime = formatter.format(date)
 
+                            Text(
+                                text = formattedTime,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                         Text(
-                            text = formattedTime,
-                            style = MaterialTheme.typography.labelMedium
+                            text = buildAnnotatedString {
+                                append("${weatherInfo.temperature?.roundToInt()}")
+                                withStyle(
+                                    SpanStyle(
+                                        baselineShift = BaselineShift.Superscript
+                                    )
+                                ) {
+                                    append("o")
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    Text(
-                        text = "${weatherInfo.temperature}",
-                        style = MaterialTheme.typography.labelSmall
-                    )
                 }
             }
         }
+        
     }
 }
 
