@@ -1,6 +1,9 @@
 package com.githukudenis.feature_weather_info.ui.today
 
 import android.content.res.Configuration
+import android.graphics.PointF
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,12 +37,19 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,7 +98,7 @@ fun TodayRoute(
 
     val scope = rememberCoroutineScope()
 
-    val modalBottomSheetShate = rememberModalBottomSheetState()
+    val modalBottomSheetState = rememberModalBottomSheetState()
 
 
     if (uiState.shouldAskForUnits) {
@@ -150,12 +161,12 @@ fun TodayRoute(
         }
     }
 
-    if (modalBottomSheetShate.isVisible) {
+    if (modalBottomSheetState.isVisible) {
         ModalBottomSheet(
-            sheetState = modalBottomSheetShate,
+            sheetState = modalBottomSheetState,
             onDismissRequest = {
                 scope.launch {
-                    modalBottomSheetShate.hide()
+                    modalBottomSheetState.hide()
                 }
             }) {
             Column(
@@ -209,10 +220,10 @@ fun TodayRoute(
         snackbarHostState = snackbarHostState,
         onOpenOptions = {
             scope.launch {
-                if (modalBottomSheetShate.isVisible) {
-                    modalBottomSheetShate.hide()
+                if (modalBottomSheetState.isVisible) {
+                    modalBottomSheetState.hide()
                 } else {
-                    modalBottomSheetShate.show()
+                    modalBottomSheetState.show()
                 }
             }
         },
@@ -321,6 +332,7 @@ private fun TodayScreen(
                 )
             }
         }
+
         HourlySection(hourLyForeCast = todayUiState.hourlyForeCastState.foreCast)
     }
 }
@@ -402,10 +414,92 @@ fun HourlySection(
                 }
             }
         }
-        
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (hourLyForeCast.isNotEmpty()) {
+            val animationProgress = remember {
+                Animatable(0f)
+            }
+
+            LaunchedEffect(hourLyForeCast) {
+                animationProgress.animateTo(
+                    1f, tween(1000)
+                )
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(3 / 2f)
+                    .drawWithCache {
+                        val tempList =
+                            hourLyForeCast
+                                .take(6)
+                                .mapNotNull { it.temperature }
+                                .map { it.toFloat() }
+                        val path = generateGraphPath(tempList, size)
+                        val filledPath = Path()
+                        filledPath.addPath(path)
+                        filledPath.relativeLineTo(0f, size.height)
+                        filledPath.lineTo(0f, size.height)
+                        filledPath.close()
+
+                        onDrawBehind {
+                            drawPath(path, Color(0xFF3FA2BA), style = Stroke(width = 2.dp.toPx()))
+
+                            clipRect(right = size.width * animationProgress.value) {
+                                drawPath(
+                                    filledPath,
+                                    brush = Brush.verticalGradient(
+                                        listOf(
+                                            Color(0xFFE4EEF8),
+                                            Color.Transparent
+                                        )
+                                    ),
+                                    style = Fill
+                                )
+                            }
+                        }
+                    }
+            )
+        }
     }
 }
 
+
+private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
+    val path = Path()
+    val numberEntries = tempList.size - 1
+    val tempWidth = size.width / numberEntries
+
+    val maxValue = tempList.maxBy { it }
+    val minValue = tempList.minBy { it }
+    val range = maxValue - minValue
+    val heightPxPerTempValue = size.height / range.toFloat()
+
+    var previousTempX = 0f
+    var previousTempY = size.height
+    tempList.forEachIndexed { index, temp ->
+        if (index == 0) {
+            path.moveTo(
+                x = 0f,
+                y = size.height - (temp - minValue).toFloat() * heightPxPerTempValue
+            )
+        }
+        val tempX = index * tempWidth
+        val tempY = size.height - (temp - minValue).toFloat() * heightPxPerTempValue
+
+        // create a smooth curve using cubic bezier
+        val controlPoint1 = PointF((tempX + previousTempX) / 2f, previousTempY)
+        val controlPoint2 = PointF((tempX + previousTempX) / 2f, tempY)
+        path.cubicTo(
+            controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, tempX, tempY
+        )
+        previousTempX = tempX
+        previousTempY = tempY
+    }
+    return path
+}
 
 @Preview(
     device = "id:pixel_7", showSystemUi = false,
