@@ -39,7 +39,7 @@ data class ForeCast(
 )
 
 sealed interface TodayScreenState {
-    object Loading: TodayScreenState
-    class Error(val userMessages: List<UserMessage>): TodayScreenState
+    data class Loading(val shouldAskForUnits: Boolean = false): TodayScreenState
+    data class Error(val userMessages: List<UserMessage> = emptyList()): TodayScreenState
     data class Loaded(val todayUiState: TodayUiState): TodayScreenState
 }

@@ -2,6 +2,9 @@ package com.githukudenis.feature_weather_info.ui.today
 
 import android.content.res.Configuration
 import android.graphics.PointF
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -53,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
@@ -62,6 +66,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.githukudenis.feature_weather_info.R
+import com.githukudenis.feature_weather_info.common.MessageType
 import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.feature_weather_info.data.repository.Units
@@ -90,38 +95,55 @@ fun TodayRoute(
 ) {
     val uiState by todayViewModel.state.collectAsStateWithLifecycle()
 
-    when (val currentState = uiState) {
-        is TodayScreenState.Loading -> {
-            LoadingScreen()
-        }
-
-        is TodayScreenState.Loaded -> {
-            LoadedScreen(
-                snackbarHostState = snackbarHostState,
-                todayUiState = currentState.todayUiState,
-                appTheme = appTheme,
-                onChangeUnits = {
-                    todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
-                },
-                onChangeTheme = onChangeAppTheme,
-                onShowUserMessage = { messageId ->
-                    todayViewModel.onEvent(
-                        TodayUiEvent.OnShowUserMessage(
-                            messageId
+    Crossfade(
+        targetState = uiState,
+        label = "screen_state",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    ) {
+        when (val currentState = it) {
+            is TodayScreenState.Loading -> {
+                LoadingScreen(
+                    shouldAskForUnits = currentState.shouldAskForUnits,
+                    onSelectUnits = { units ->
+                        todayViewModel.onEvent(
+                            TodayUiEvent.ChangeUnits(units)
                         )
-                    )
-                },
-                onViewFullReport = onViewFullReport
-            )
-        }
+                    }
+                )
+            }
 
-        is TodayScreenState.Error -> {
-            ErrorScreen(
-                error = currentState.userMessages.first(),
-                onRetry = {
-                    todayViewModel.onEvent(TodayUiEvent.Retry)
-                }
-            )
+            is TodayScreenState.Loaded -> {
+                LoadedScreen(
+                    snackbarHostState = snackbarHostState,
+                    todayUiState = currentState.todayUiState,
+                    appTheme = appTheme,
+                    onChangeUnits = {
+                        todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                    },
+                    onChangeTheme = onChangeAppTheme,
+                    onShowUserMessage = { messageId, messageType ->
+                        todayViewModel.onEvent(
+                            TodayUiEvent.OnShowUserMessage(
+                                messageId,
+                                messageType
+                            )
+                        )
+                    },
+                    onViewFullReport = onViewFullReport
+                )
+            }
+
+            is TodayScreenState.Error -> {
+                ErrorScreen(
+                    error = currentState.userMessages.first(),
+                    onRetry = {
+                        todayViewModel.onEvent(TodayUiEvent.Retry)
+                    }
+                )
+            }
         }
     }
 }
@@ -138,8 +160,15 @@ private fun ErrorScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
+            text = "Oops",
+            style = MaterialTheme.typography.headlineLarge
+        )
+        Text(
             text = error.description ?: "An unknown error occurred",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.bodyMedium.copy(),
+            color = MaterialTheme.colorScheme.onBackground.copy(
+                alpha = 0.7f
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedButton(
@@ -162,7 +191,7 @@ private fun LoadedScreen(
     appTheme: Theme,
     onChangeUnits: (Units) -> Unit,
     onChangeTheme: (Theme) -> Unit,
-    onShowUserMessage: (Int) -> Unit,
+    onShowUserMessage: (Int, MessageType) -> Unit,
     onViewFullReport: () -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
@@ -192,7 +221,58 @@ private fun LoadedScreen(
                 message = userMessage.description ?: return@LaunchedEffect,
                 duration = SnackbarDuration.Long
             )
-            userMessage.id?.let { onShowUserMessage(it) }
+            userMessage.id?.let { onShowUserMessage(it, userMessage.messageType) }
+        }
+    }
+
+    if (modalBottomSheetState.isVisible) {
+        ModalBottomSheet(
+            sheetState = modalBottomSheetState,
+            onDismissRequest = {
+                scope.launch {
+                    modalBottomSheetState.hide()
+                }
+            }) {
+            Column(
+                modifier = Modifier
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                val context = LocalContext.current
+
+                Text(
+                    text = context.getString(R.string.unit_dialog_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    items(items = units) {
+                        FilterChip(
+                            selected = it == todayUiState.selectedUnits,
+                            leadingIcon = {
+                                if (it == todayUiState.selectedUnits) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_check),
+                                        contentDescription = "Selected"
+                                    )
+                                }
+                            },
+                            shape = RoundedCornerShape(32.dp),
+                            onClick = {
+                                onChangeUnits(selectedUnits.value ?: return@FilterChip)
+                            },
+                            label = {
+                                Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
+                            })
+                    }
+                }
+            }
         }
     }
 
@@ -254,56 +334,6 @@ private fun LoadedScreen(
         }
     }
 
-    if (modalBottomSheetState.isVisible) {
-        ModalBottomSheet(
-            sheetState = modalBottomSheetState,
-            onDismissRequest = {
-                scope.launch {
-                    modalBottomSheetState.hide()
-                }
-            }) {
-            Column(
-                modifier = Modifier
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                val context = LocalContext.current
-
-                Text(
-                    text = context.getString(R.string.unit_dialog_title),
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    items(items = units) {
-                        FilterChip(
-                            selected = it == todayUiState.selectedUnits,
-                            leadingIcon = {
-                                if (it == todayUiState.selectedUnits) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_check),
-                                        contentDescription = "Selected"
-                                    )
-                                }
-                            },
-                            shape = RoundedCornerShape(32.dp),
-                            onClick = {
-                                onChangeUnits(selectedUnits.value ?: return@FilterChip)
-                            },
-                            label = {
-                                Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
-                            })
-                    }
-                }
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -374,13 +404,11 @@ private fun LoadedScreen(
                     value = " $it %"
                 )
             }
-
-            HourlySection(
-                hourLyForeCast = todayUiState.hourlyForeCastState.foreCast,
-                onViewFullReport = onViewFullReport
-            )
-
         }
+        HourlySection(
+            hourLyForeCast = todayUiState.hourlyForeCastState.foreCast,
+            onViewFullReport = onViewFullReport
+        )
     }
 }
 
@@ -553,7 +581,76 @@ fun HourlySection(
 
 
 @Composable
-private fun LoadingScreen() {
+private fun LoadingScreen(
+    shouldAskForUnits: Boolean,
+    onSelectUnits: (Units) -> Unit
+) {
+    val units = listOf(
+        Units.METRIC,
+        Units.STANDARD,
+        Units.IMPERIAL,
+    )
+
+    val selectedUnits = remember {
+        mutableStateOf(units.first())
+    }
+    val dialogProperties = DialogProperties()
+
+    if (shouldAskForUnits) {
+        // Ask for units
+        Dialog(
+            onDismissRequest = {
+                onSelectUnits(selectedUnits.value)
+            }, properties = dialogProperties
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    val context = LocalContext.current
+
+                    Text(
+                        text = context.getString(R.string.unit_dialog_title),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    units.forEach {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = it.name.lowercase().replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            RadioButton(
+                                selected = it == selectedUnits.value,
+                                onClick = { selectedUnits.value = it })
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            onSelectUnits(selectedUnits.value)
+                        }
+                    ) {
+                        Text(
+                            text = context.getString(R.string.ok)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         JumpingBubblesIndicator()
     }
@@ -625,10 +722,11 @@ fun TodayRoutePreview() {
             todayUiState = TodayUiState(),
             appTheme = Theme.DARK,
             onChangeTheme = {},
-            onShowUserMessage = {},
+            onShowUserMessage = { id, type -> },
             snackbarHostState = SnackbarHostState(),
             onChangeUnits = {},
             onViewFullReport = {}
         )
     }
 }
+

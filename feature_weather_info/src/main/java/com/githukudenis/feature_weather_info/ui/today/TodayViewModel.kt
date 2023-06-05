@@ -3,6 +3,7 @@ package com.githukudenis.feature_weather_info.ui.today
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.githukudenis.feature_weather_info.common.MessageType
 import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.local.LocationClient
@@ -23,7 +24,7 @@ class TodayViewModel(
 ) : ViewModel() {
 
     private val todayUiState = MutableStateFlow(TodayUiState())
-    var state = MutableStateFlow<TodayScreenState>(TodayScreenState.Loading)
+    var state = MutableStateFlow<TodayScreenState>(TodayScreenState.Loading())
         private set
 
     init {
@@ -41,20 +42,10 @@ class TodayViewModel(
                 .distinctUntilChanged()
                 .collectLatest {
                     if (it.second == null) {
-                        todayUiState.update { oldUiState ->
-                            oldUiState.copy(shouldAskForUnits = true)
-                        }
-
                         state.update {
-                            TodayScreenState.Loaded(todayUiState = todayUiState.value)
+                            TodayScreenState.Loading(shouldAskForUnits = true)
                         }
                     } else {
-                        todayUiState.update { oldState ->
-                            oldState.copy(selectedUnits = it.second)
-                        }
-                        state.update {
-                            TodayScreenState.Loaded(todayUiState = todayUiState.value)
-                        }
                         getLocationInfo(it.first)
                         getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
                     }
@@ -65,7 +56,7 @@ class TodayViewModel(
     fun onEvent(event: TodayUiEvent) {
         when (event) {
             is TodayUiEvent.OnShowUserMessage -> {
-                clearUserMessage(event.messageId)
+                clearUserMessage(event.messageId, event.messageType)
             }
 
             is TodayUiEvent.ChangeUnits -> {
@@ -77,26 +68,35 @@ class TodayViewModel(
                                 shouldAskForUnits = !todayUiState.value.shouldAskForUnits
                             )
                         }
-                        state.update {
-
-                            TodayScreenState.Loaded(
-                                todayUiState.value
-                            )
-                        }
                     }
                 }
             }
+
             is TodayUiEvent.Retry -> {
                 initialize()
             }
         }
     }
 
-    private fun clearUserMessage(messageId: Int) {
-        val userMessages =
-            todayUiState.value.userMessages.filterNot { userMessage -> userMessage.id == messageId }
-        state.update { oldState ->
-            TodayScreenState.Error(userMessages)
+    private fun clearUserMessage(messageId: Int, messageType: MessageType) {
+        when (messageType) {
+            MessageType.STANDARD -> {
+                val userMessages =
+                    todayUiState.value.userMessages.filterNot { userMessage -> userMessage.id == messageId }
+                todayUiState.update { oldUiState ->
+                    oldUiState.copy(userMessages = userMessages)
+                }
+            }
+
+            MessageType.ERROR -> {
+                val userMessages = TodayScreenState.Error().userMessages.filterNot {
+                    it.id == messageId
+                }
+
+                TodayScreenState.Error(
+                    userMessages = userMessages
+                )
+            }
         }
     }
 
@@ -108,11 +108,14 @@ class TodayViewModel(
                         is Resource.Error -> {
                             val userMessage = UserMessage(
                                 id = 0,
-                                description = result.errorMessage
+                                description = result.errorMessage,
+                                messageType = MessageType.ERROR
                             )
-                            val userMessages = mutableListOf<UserMessage>().apply {
-                                this.add(userMessage)
-                            }
+
+                            val userMessages = TodayScreenState.Error().userMessages.toMutableList()
+                                .apply {
+                                    add(userMessage)
+                                }
                             state.update {
                                 TodayScreenState.Error(
                                     userMessages = userMessages
@@ -121,7 +124,7 @@ class TodayViewModel(
                         }
 
                         is Resource.Loading -> {
-                            state.update { TodayScreenState.Loading }
+                            state.update { TodayScreenState.Loading() }
                         }
 
                         is Resource.Success -> {
@@ -146,8 +149,8 @@ class TodayViewModel(
                                         }
                                     )
                                 } ?: HourlyForeCastState()
-                                todayUiState.update { oldState ->
-                                    oldState.copy(
+                                todayUiState.update { oldUiState ->
+                                    oldUiState.copy(
                                         currentWeatherState = currentWeatherState,
                                         hourlyForeCastState = hourlyForeCastState
                                     )
@@ -169,7 +172,8 @@ class TodayViewModel(
                     is Resource.Error -> {
                         val userMessage = UserMessage(
                             id = 0,
-                            description = result.errorMessage
+                            description = result.errorMessage,
+                            messageType = MessageType.ERROR
                         )
                         val userMessages = mutableListOf<UserMessage>().apply {
                             this.add(userMessage)
@@ -181,14 +185,14 @@ class TodayViewModel(
                     }
 
                     is Resource.Loading -> {
-                        state.update { TodayScreenState.Loading }
+                        state.update { TodayScreenState.Loading() }
                     }
 
                     is Resource.Success -> {
                         state.update {
                             val locationState = LocationState(result.data?.first()?.name)
-                            val todayUiState = TodayUiState(locationState = locationState)
-                            TodayScreenState.Loaded(todayUiState)
+                            todayUiState.update { oldUiState -> oldUiState.copy(locationState = locationState) }
+                            TodayScreenState.Loaded(todayUiState.value)
                         }
                     }
                 }
