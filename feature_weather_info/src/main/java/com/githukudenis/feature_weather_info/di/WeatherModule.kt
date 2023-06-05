@@ -10,7 +10,6 @@ import com.githukudenis.feature_weather_info.data.repository.RemoteWeatherDataSo
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
-import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -26,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import org.slf4j.LoggerFactory
 
 val weatherModule = module {
     single<FusedLocationProviderClient> {
@@ -63,7 +63,7 @@ val weatherModule = module {
                 gson()
             }
             install(Logging) {
-                level = LogLevel.HEADERS
+                level = LogLevel.ALL
                 logger = Logger.DEFAULT
             }
         }

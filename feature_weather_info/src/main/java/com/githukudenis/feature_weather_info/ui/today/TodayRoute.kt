@@ -2,16 +2,14 @@ package com.githukudenis.feature_weather_info.ui.today
 
 import android.content.res.Configuration
 import android.graphics.PointF
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,30 +27,31 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
@@ -63,6 +62,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.githukudenis.feature_weather_info.R
+import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.ui.today.components.CurrentWeatherItem
@@ -72,10 +72,11 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.TimeZone
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,29 +85,125 @@ fun TodayRoute(
     snackbarHostState: SnackbarHostState,
     todayViewModel: TodayViewModel,
     appTheme: Theme,
-    onChangeAppTheme: (Theme) -> Unit
+    onChangeAppTheme: (Theme) -> Unit,
+    onViewFullReport: () -> Unit
 ) {
     val uiState by todayViewModel.state.collectAsStateWithLifecycle()
+
+    when (val currentState = uiState) {
+        is TodayScreenState.Loading -> {
+            LoadingScreen()
+        }
+
+        is TodayScreenState.Loaded -> {
+            LoadedScreen(
+                snackbarHostState = snackbarHostState,
+                todayUiState = currentState.todayUiState,
+                appTheme = appTheme,
+                onChangeUnits = {
+                    todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                },
+                onChangeTheme = onChangeAppTheme,
+                onShowUserMessage = { messageId ->
+                    todayViewModel.onEvent(
+                        TodayUiEvent.OnShowUserMessage(
+                            messageId
+                        )
+                    )
+                },
+                onViewFullReport = onViewFullReport
+            )
+        }
+
+        is TodayScreenState.Error -> {
+            ErrorScreen(
+                error = currentState.userMessages.first(),
+                onRetry = {
+                    todayViewModel.onEvent(TodayUiEvent.Retry)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorScreen(
+    error: UserMessage,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = error.description ?: "An unknown error occurred",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onRetry,
+            shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(
+                text = "Retry",
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoadedScreen(
+    snackbarHostState: SnackbarHostState,
+    todayUiState: TodayUiState,
+    appTheme: Theme,
+    onChangeUnits: (Units) -> Unit,
+    onChangeTheme: (Theme) -> Unit,
+    onShowUserMessage: (Int) -> Unit,
+    onViewFullReport: () -> Unit
+) {
+    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    val time = LocalDateTime.now()
+        .format(dateFormatter)
+
+    val dialogProperties = DialogProperties()
 
     val units = listOf(
         Units.METRIC,
         Units.STANDARD,
         Units.IMPERIAL,
     )
-    val dialogProperties =
-        DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
 
-    val scope = rememberCoroutineScope()
+    val selectedUnits = remember {
+        mutableStateOf(todayUiState.selectedUnits)
+    }
 
     val modalBottomSheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
 
 
-    if (uiState.shouldAskForUnits) {
+    LaunchedEffect(todayUiState.userMessages) {
+        if (todayUiState.userMessages.isNotEmpty()) {
+            val userMessage = todayUiState.userMessages.first()
+            snackbarHostState.showSnackbar(
+                message = userMessage.description ?: return@LaunchedEffect,
+                duration = SnackbarDuration.Long
+            )
+            userMessage.id?.let { onShowUserMessage(it) }
+        }
+    }
+
+    if (todayUiState.shouldAskForUnits) {
         // Ask for units
         Dialog(
             onDismissRequest = {
-                uiState.selectedUnits?.let { TodayUiEvent.ChangeUnits(it) }
-                    ?.let { todayViewModel.onEvent(it) }
+                if (todayUiState.selectedUnits == selectedUnits.value) {
+                    return@Dialog
+                }
+                onChangeUnits(selectedUnits.value ?: return@Dialog)
             }, properties = dialogProperties
         ) {
             Box(
@@ -139,17 +236,13 @@ fun TodayRoute(
                                 style = MaterialTheme.typography.labelMedium
                             )
                             RadioButton(
-                                selected = it == uiState.selectedUnits,
-                                onClick = { todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it)) })
+                                selected = it == todayUiState.selectedUnits,
+                                onClick = { selectedUnits.value = it })
                         }
                     }
                     Button(
                         onClick = {
-                            uiState.selectedUnits?.let {
-                                TodayUiEvent.ChangeUnits(
-                                    it
-                                )
-                            }?.let { todayViewModel.onEvent(it) }
+                            onChangeUnits(selectedUnits.value ?: return@Button)
                         }
                     ) {
                         Text(
@@ -190,9 +283,9 @@ fun TodayRoute(
                 ) {
                     items(items = units) {
                         FilterChip(
-                            selected = it == uiState.selectedUnits,
+                            selected = it == todayUiState.selectedUnits,
                             leadingIcon = {
-                                if (it == uiState.selectedUnits) {
+                                if (it == todayUiState.selectedUnits) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_check),
                                         contentDescription = "Selected"
@@ -201,7 +294,7 @@ fun TodayRoute(
                             },
                             shape = RoundedCornerShape(32.dp),
                             onClick = {
-                                todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                                onChangeUnits(selectedUnits.value ?: return@FilterChip)
                             },
                             label = {
                                 Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
@@ -212,54 +305,8 @@ fun TodayRoute(
         }
     }
 
-
-    TodayScreen(
-        todayUiState = uiState,
-        appTheme = appTheme,
-        onChangeTheme = onChangeAppTheme,
-        snackbarHostState = snackbarHostState,
-        onOpenOptions = {
-            scope.launch {
-                if (modalBottomSheetState.isVisible) {
-                    modalBottomSheetState.hide()
-                } else {
-                    modalBottomSheetState.show()
-                }
-            }
-        },
-        onShowUserMessage = { messageId ->
-            todayViewModel.onEvent(TodayUiEvent.OnShowUserMessage(messageId))
-        })
-}
-
-@Composable
-private fun TodayScreen(
-    modifier: Modifier = Modifier,
-    snackbarHostState: SnackbarHostState,
-    todayUiState: TodayUiState,
-    appTheme: Theme,
-    onOpenOptions: () -> Unit,
-    onChangeTheme: (Theme) -> Unit,
-    onShowUserMessage: (Int) -> Unit
-) {
-
-    val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-    dateFormat.timeZone = TimeZone.getDefault()
-    val date = dateFormat.format(Date())
-
-    LaunchedEffect(todayUiState.userMessages) {
-        if (todayUiState.userMessages.isNotEmpty()) {
-            val userMessage = todayUiState.userMessages.first()
-            snackbarHostState.showSnackbar(
-                message = userMessage.description ?: return@LaunchedEffect,
-                duration = SnackbarDuration.Long
-            )
-            userMessage.id?.let { onShowUserMessage(it) }
-        }
-    }
-
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.linearGradient(
@@ -274,24 +321,20 @@ private fun TodayScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TopRow(appTheme = appTheme, onOpenMenu = onOpenOptions, onChangeTheme = onChangeTheme)
-
-        if (todayUiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                JumpingBubblesIndicator()
+        TopRow(appTheme = appTheme, onOpenMenu = {
+            scope.launch {
+                if (modalBottomSheetState.isVisible) {
+                    modalBottomSheetState.hide()
+                } else {
+                    modalBottomSheetState.show()
+                }
             }
-            return
-        }
-
+        }, onChangeTheme = onChangeTheme)
 
         todayUiState.locationState.name?.let {
             LocationContainer(
                 name = it,
-                date = date
+                date = time
             )
         }
         val icon: Int? = todayUiState.currentWeatherState.icon?.let { iconId ->
@@ -331,15 +374,21 @@ private fun TodayScreen(
                     value = " $it %"
                 )
             }
-        }
 
-        HourlySection(hourLyForeCast = todayUiState.hourlyForeCastState.foreCast)
+            HourlySection(
+                hourLyForeCast = todayUiState.hourlyForeCastState.foreCast,
+                onViewFullReport = onViewFullReport
+            )
+
+        }
     }
 }
 
+@OptIn(ExperimentalTextApi::class)
 @Composable
 fun HourlySection(
-    hourLyForeCast: List<ForeCast>
+    hourLyForeCast: List<ForeCast>,
+    onViewFullReport: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -349,15 +398,19 @@ fun HourlySection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            val interactionSource = remember { MutableInteractionSource() }
             Text(
                 text = "Today",
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = "See full report",
-                style = MaterialTheme.typography.labelMedium
-            )
+
+            TextButton(onClick = onViewFullReport) {
+                Text(
+                    text = "See full report",
+                )
+            }
         }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyRow(
@@ -387,10 +440,17 @@ fun HourlySection(
                             )
                         }
                         weatherInfo.time?.let { time ->
-                            val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                            formatter.timeZone = TimeZone.getDefault()
-                            val date = Date(time * 1000L)
-                            val formattedTime = formatter.format(date)
+                            val dateFormatter = DateTimeFormatter
+                                .ofPattern("hh:mm a", Locale.getDefault())
+                                .apply {
+                                    withZone(ZoneId.systemDefault())
+                                }
+
+                            val time = LocalDateTime.ofInstant(
+                                Instant.ofEpochMilli(time * 1_000L),
+                                ZoneId.systemDefault()
+                            )
+                            val formattedTime = time.format(dateFormatter)
 
                             Text(
                                 text = formattedTime,
@@ -416,56 +476,88 @@ fun HourlySection(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (hourLyForeCast.isNotEmpty()) {
-            val animationProgress = remember {
-                Animatable(0f)
-            }
-
-            LaunchedEffect(hourLyForeCast) {
-                animationProgress.animateTo(
-                    1f, tween(1000)
-                )
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(3 / 2f)
-                    .drawWithCache {
-                        val tempList =
-                            hourLyForeCast
-                                .take(6)
-                                .mapNotNull { it.temperature }
-                                .map { it.toFloat() }
-                        val path = generateGraphPath(tempList, size)
-                        val filledPath = Path()
-                        filledPath.addPath(path)
-                        filledPath.relativeLineTo(0f, size.height)
-                        filledPath.lineTo(0f, size.height)
-                        filledPath.close()
-
-                        onDrawBehind {
-                            drawPath(path, Color(0xFF3FA2BA), style = Stroke(width = 2.dp.toPx()))
-
-                            clipRect(right = size.width * animationProgress.value) {
-                                drawPath(
-                                    filledPath,
-                                    brush = Brush.verticalGradient(
-                                        listOf(
-                                            Color(0xFFE4EEF8),
-                                            Color.Transparent
-                                        )
-                                    ),
-                                    style = Fill
-                                )
-                            }
-                        }
-                    }
-            )
-        }
+//        if (hourLyForeCast.isNotEmpty()) {
+//            val animationProgress = remember {
+//                Animatable(0f)
+//            }
+//
+//            LaunchedEffect(hourLyForeCast) {
+//                animationProgress.animateTo(
+//                    1f, tween(1000)
+//                )
+//            }
+//
+//            val textMeasurer = rememberTextMeasurer()
+//
+//            Spacer(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .aspectRatio(3 / 2f)
+//                    .drawWithCache {
+//                        val tempList =
+//                            hourLyForeCast
+//                                .take(6)
+//                                .mapNotNull { it.temperature }
+//                                .map { it.toFloat() }
+//
+//                        val path = generateGraphPath(tempList, size)
+//                        val filledPath = Path()
+//                        filledPath.addPath(path)
+//                        filledPath.relativeLineTo(0f, size.height)
+//                        filledPath.lineTo(0f, size.height)
+//                        filledPath.close()
+//
+//
+//
+//                        onDrawBehind {
+//                            drawPath(path, Color(0xFF3FA2BA), style = Stroke(width = 2.dp.toPx()))
+//
+//                            clipRect(right = size.width * animationProgress.value) {
+//                                drawPath(
+//                                    filledPath,
+//                                    brush = Brush.verticalGradient(
+//                                        listOf(
+//                                            Color(0xFFE4EEF8),
+//                                            Color.Transparent
+//                                        )
+//                                    ),
+//                                    style = Fill
+//                                )
+//                            }
+//
+//                            drawPoints(
+//                                points = generatePoints(tempList, size),
+//                                pointMode = PointMode.Points,
+//                                strokeWidth = 8.dp.toPx(),
+//                                cap = StrokeCap.Round,
+//                                color = Color(0xFF3FA2BA),
+//                            )
+//
+//                            hourLyForeCast.forEach { foreCast ->
+//                                drawText(
+//                                    textMeasurer = textMeasurer,
+//                                    text = buildAnnotatedString {
+//                                        withStyle(SpanStyle()) {
+//                                            append()
+//                                        }
+//                                    },
+//                                )
+//                            }
+//
+//                        }
+//                    }
+//            )
+//        }
     }
 }
 
+
+@Composable
+private fun LoadingScreen() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        JumpingBubblesIndicator()
+    }
+}
 
 private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
     val path = Path()
@@ -475,7 +567,7 @@ private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
     val maxValue = tempList.maxBy { it }
     val minValue = tempList.minBy { it }
     val range = maxValue - minValue
-    val heightPxPerTempValue = size.height / range.toFloat()
+    val heightPxPerTempValue = size.height / range
 
     var previousTempX = 0f
     var previousTempY = size.height
@@ -483,11 +575,11 @@ private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
         if (index == 0) {
             path.moveTo(
                 x = 0f,
-                y = size.height - (temp - minValue).toFloat() * heightPxPerTempValue
+                y = size.height - (temp - minValue) * heightPxPerTempValue
             )
         }
         val tempX = index * tempWidth
-        val tempY = size.height - (temp - minValue).toFloat() * heightPxPerTempValue
+        val tempY = size.height - (temp - minValue) * heightPxPerTempValue
 
         // create a smooth curve using cubic bezier
         val controlPoint1 = PointF((tempX + previousTempX) / 2f, previousTempY)
@@ -501,6 +593,25 @@ private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
     return path
 }
 
+private fun generatePoints(tempList: List<Float>, size: Size): List<Offset> {
+    val numberEntries = tempList.size - 1
+    val tempWidth = size.width / numberEntries
+
+    val maxValue = tempList.maxBy { it }
+    val minValue = tempList.minBy { it }
+    val range = maxValue - minValue
+    val heightPxPerTempValue = size.height / range
+
+    return tempList.mapIndexed { index, temp ->
+        if (index == 0) {
+            Offset(0f, size.height - (temp - minValue) * heightPxPerTempValue)
+        }
+        val tempX = index * tempWidth
+        val tempY = size.height - (temp - minValue) * heightPxPerTempValue
+        Offset(tempX, tempY)
+    }
+}
+
 @Preview(
     device = "id:pixel_7", showSystemUi = false,
     showBackground = true,
@@ -510,13 +621,14 @@ private fun generateGraphPath(tempList: List<Float>, size: Size): Path {
 @Composable
 fun TodayRoutePreview() {
     MaterialTheme {
-        TodayScreen(
+        LoadedScreen(
             todayUiState = TodayUiState(),
             appTheme = Theme.DARK,
             onChangeTheme = {},
             onShowUserMessage = {},
-            onOpenOptions = {},
-            snackbarHostState = SnackbarHostState()
+            snackbarHostState = SnackbarHostState(),
+            onChangeUnits = {},
+            onViewFullReport = {}
         )
     }
 }

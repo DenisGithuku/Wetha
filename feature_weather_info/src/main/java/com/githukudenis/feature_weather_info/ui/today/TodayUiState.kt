@@ -6,7 +6,6 @@ import java.time.LocalDate
 
 
 data class TodayUiState(
-    val isLoading: Boolean = false,
     val shouldAskForUnits: Boolean = false,
     val selectedUnits: Units? = null,
     val locationState: LocationState = LocationState(),
@@ -38,3 +37,9 @@ data class ForeCast(
     val time: Int? = null,
     val temperature: Double? = null
 )
+
+sealed interface TodayScreenState {
+    object Loading: TodayScreenState
+    class Error(val userMessages: List<UserMessage>): TodayScreenState
+    data class Loaded(val todayUiState: TodayUiState): TodayScreenState
+}

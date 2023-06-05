@@ -22,10 +22,15 @@ class TodayViewModel(
     private val locationClient: LocationClient
 ) : ViewModel() {
 
-    var state = MutableStateFlow(TodayUiState())
+    private val todayUiState = MutableStateFlow(TodayUiState())
+    var state = MutableStateFlow<TodayScreenState>(TodayScreenState.Loading)
         private set
 
     init {
+        initialize()
+    }
+
+    private fun initialize() {
         viewModelScope.launch {
             combine(
                 userPrefsRepository.userPrefs,
@@ -36,12 +41,19 @@ class TodayViewModel(
                 .distinctUntilChanged()
                 .collectLatest {
                     if (it.second == null) {
-                        state.update { oldState ->
-                            oldState.copy(shouldAskForUnits = true)
+                        todayUiState.update { oldUiState ->
+                            oldUiState.copy(shouldAskForUnits = true)
+                        }
+
+                        state.update {
+                            TodayScreenState.Loaded(todayUiState = todayUiState.value)
                         }
                     } else {
-                        state.update { oldState ->
+                        todayUiState.update { oldState ->
                             oldState.copy(selectedUnits = it.second)
+                        }
+                        state.update {
+                            TodayScreenState.Loaded(todayUiState = todayUiState.value)
                         }
                         getLocationInfo(it.first)
                         getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
@@ -59,20 +71,32 @@ class TodayViewModel(
             is TodayUiEvent.ChangeUnits -> {
                 viewModelScope.launch {
                     userPrefsRepository.changeUnits(event.units).also {
-                        state.update { oldState ->
-                            oldState.copy(selectedUnits = event.units, shouldAskForUnits = false)
+                        todayUiState.update { oldUiState ->
+                            oldUiState.copy(
+                                selectedUnits = event.units,
+                                shouldAskForUnits = !todayUiState.value.shouldAskForUnits
+                            )
+                        }
+                        state.update {
+
+                            TodayScreenState.Loaded(
+                                todayUiState.value
+                            )
                         }
                     }
                 }
+            }
+            is TodayUiEvent.Retry -> {
+                initialize()
             }
         }
     }
 
     private fun clearUserMessage(messageId: Int) {
         val userMessages =
-            state.value.userMessages.filterNot { userMessage -> userMessage.id == messageId }
+            todayUiState.value.userMessages.filterNot { userMessage -> userMessage.id == messageId }
         state.update { oldState ->
-            oldState.copy(userMessages = userMessages)
+            TodayScreenState.Error(userMessages)
         }
     }
 
@@ -89,16 +113,15 @@ class TodayViewModel(
                             val userMessages = mutableListOf<UserMessage>().apply {
                                 this.add(userMessage)
                             }
-                            state.update { oldState ->
-                                oldState.copy(
-                                    isLoading = false,
+                            state.update {
+                                TodayScreenState.Error(
                                     userMessages = userMessages
                                 )
                             }
                         }
 
                         is Resource.Loading -> {
-                            state.update { oldState -> oldState.copy(isLoading = true) }
+                            state.update { TodayScreenState.Loading }
                         }
 
                         is Resource.Success -> {
@@ -123,10 +146,14 @@ class TodayViewModel(
                                         }
                                     )
                                 } ?: HourlyForeCastState()
-                                oldState.copy(
-                                    isLoading = false,
-                                    currentWeatherState = currentWeatherState,
-                                    hourlyForeCastState = hourlyForeCastState
+                                todayUiState.update { oldState ->
+                                    oldState.copy(
+                                        currentWeatherState = currentWeatherState,
+                                        hourlyForeCastState = hourlyForeCastState
+                                    )
+                                }
+                                TodayScreenState.Loaded(
+                                    todayUiState.value
                                 )
                             }
                         }
@@ -147,24 +174,21 @@ class TodayViewModel(
                         val userMessages = mutableListOf<UserMessage>().apply {
                             this.add(userMessage)
                         }
-                        state.update { oldState ->
-                            oldState.copy(
-                                isLoading = false,
-                                userMessages = userMessages
-                            )
+
+                        state.update {
+                            TodayScreenState.Error(userMessages)
                         }
                     }
 
                     is Resource.Loading -> {
-                        state.update { oldState -> oldState.copy(isLoading = true) }
+                        state.update { TodayScreenState.Loading }
                     }
 
                     is Resource.Success -> {
-                        state.update { oldState ->
+                        state.update {
                             val locationState = LocationState(result.data?.first()?.name)
-                            oldState.copy(
-                                locationState = locationState
-                            )
+                            val todayUiState = TodayUiState(locationState = locationState)
+                            TodayScreenState.Loaded(todayUiState)
                         }
                     }
                 }
