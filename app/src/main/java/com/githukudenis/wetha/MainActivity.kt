@@ -1,6 +1,7 @@
 package com.githukudenis.wetha
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -32,12 +33,20 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.wetha.ui.theme.WethaTheme
+import com.githukudenis.wetha.util.LocationListenerWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import org.koin.androidx.compose.koinViewModel
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
@@ -48,6 +57,8 @@ class MainActivity : ComponentActivity() {
             window,
             false
         )
+
+        setupLocationRequestWorker(this)
 
         setContent {
             val snackbarHostState = SnackbarHostState()
@@ -93,7 +104,7 @@ class MainActivity : ComponentActivity() {
                         LaunchedEffect(Unit) {
                             permissionsState.launchMultiplePermissionRequest()
                         }
-                        PermissionsScreen(permissions = permissionsState.permissions.map { it.permission })
+                        PermissionsScreen(listOf("Location permissions"))
                     }
                 }
 
@@ -149,4 +160,19 @@ fun PermissionsScreen(
             )
         }
     }
+}
+
+private fun setupLocationRequestWorker(context: Context) {
+    val constraints = Constraints.Builder()
+        .setRequiresBatteryNotLow(true)
+        .setRequiredNetworkType(NetworkType.METERED)
+        .build()
+
+    val workRequest = PeriodicWorkRequestBuilder<LocationListenerWorker>(1, TimeUnit.DAYS)
+        .setConstraints(constraints)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.HOURS)
+        .build()
+
+    WorkManager.getInstance(context)
+        .enqueue(workRequest)
 }

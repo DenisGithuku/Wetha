@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,6 +78,7 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -278,64 +280,6 @@ private fun LoadedScreen(
                             label = {
                                 Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
                             })
-                    }
-                }
-            }
-        }
-    }
-
-    if (todayUiState.shouldAskForUnits) {
-        // Ask for units
-        Dialog(
-            onDismissRequest = {
-                if (todayUiState.selectedUnits == selectedUnits.value) {
-                    return@Dialog
-                }
-                onChangeUnits(selectedUnits.value ?: return@Dialog)
-            }, properties = dialogProperties
-        ) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(24.dp)
-            ) {
-                Column(
-                    modifier = Modifier,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    val context = LocalContext.current
-
-                    Text(
-                        text = context.getString(R.string.unit_dialog_title),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    units.forEach {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = it.name.lowercase().replaceFirstChar { it.uppercase() },
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                            RadioButton(
-                                selected = it == todayUiState.selectedUnits,
-                                onClick = { selectedUnits.value = it })
-                        }
-                    }
-                    Button(
-                        onClick = {
-                            onChangeUnits(selectedUnits.value ?: return@Button)
-                        }
-                    ) {
-                        Text(
-                            text = context.getString(R.string.ok)
-                        )
                     }
                 }
             }

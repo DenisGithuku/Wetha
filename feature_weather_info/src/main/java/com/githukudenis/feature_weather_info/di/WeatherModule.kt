@@ -43,7 +43,7 @@ val weatherModule = module {
     }
 
     single<UserPrefsRepository> {
-        UserPrefsRepositoryImpl(androidContext())
+        UserPrefsRepositoryImpl(androidContext(), get())
     }
 
     single {
@@ -56,7 +56,7 @@ val weatherModule = module {
     }
 
     viewModel {
-        TodayViewModel(get(), get(), get(), get())
+        TodayViewModel(get(), get(), get())
     }
 
     single<OpenWeatherApi> {

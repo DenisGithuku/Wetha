@@ -14,6 +14,7 @@ object versions {
     val location = "21.0.1"
     val datastore = "1.0.0"
     val room = "2.5.1"
+    val work = "2.8.1"
     val material = "1.1.0"
     val gson = "2.9.0"
     val compose_ui = "1.4.2"
@@ -28,6 +29,7 @@ object libs {
     val timber = "com.jakewharton.timber:timber:${versions.timber}"
     val ktorLogger = "io.ktor:ktor-client-logging:${versions.ktor}"
     val koin = "io.insert-koin:koin-android:${versions.koin}"
+    val koinCore = "io.insert-koin:koin-core:${versions.koin}"
     val compose_nav = "androidx.navigation:navigation-compose:${versions.compose_nav}"
 
     // Koin
@@ -35,6 +37,7 @@ object libs {
     val koinAnnotations = "io.insert-koin:koin-annotations:${versions.koinAnnotations}"
     val koinKsp = "io.insert-koin:koin-ksp-compiler:${versions.koinKsp}"
     val koinCompose = "io.insert-koin:koin-androidx-compose:${versions.koin}"
+    val koinWorkManager = "io.insert-koin:koin-androidx-workmanager:${versions.koin}"
 
     val retroFit = "com.squareup.retrofit2:retrofit:${versions.retrofit}"
     val retrofitGson = "com.squareup.retrofit2:converter-gson:${versions.retrofit}"
@@ -51,7 +54,10 @@ object libs {
     val ktorContentNegotiation = "io.ktor:ktor-client-content-negotiation:$ktor"
     val ktorSerializationKotlinx = "io.ktor:ktor-serialization-kotlinx-json:$ktor"
     val ktorSerializationGson = "io.ktor:ktor-serialization-gson:${versions.ktor}"
-  
+
+    //work manager
+    val work = "androidx.work:work-runtime-ktx:${versions.work}"
+
 
     val testRunner = "androidx.test:runner:1.5.2"
     val roomKtx = "androidx.room:room-ktx:${versions.room}"

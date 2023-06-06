@@ -8,25 +8,19 @@ import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.local.ConnectionProvider
 import com.githukudenis.feature_weather_info.data.local.NetworkStatus
-import com.githukudenis.feature_weather_info.data.local.LocationClient
 import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TodayViewModel(
     private val weatherRepository: WeatherRepository,
     private val userPrefsRepository: UserPrefsRepository,
-    private val locationClient: LocationClient,
     private val connectionProvider: ConnectionProvider
 ) : ViewModel() {
 
@@ -45,27 +39,29 @@ class TodayViewModel(
             connectionProvider.networkStatus.collectLatest { connectionState ->
                 when (connectionState) {
                     NetworkStatus.Connected -> {
-                        combine(
-                            userPrefsRepository.userPrefs,
-                            locationClient.getCurrentLocationData()
-                        ) { prefs, location ->
-                            Pair(location, prefs.units)
-                        }
+                        userPrefsRepository.userPrefs
                             .distinctUntilChanged()
-                            .collectLatest {
-                                if (it.second == null) {
+                            .collectLatest { prefs ->
+                                if (prefs.units == null) {
                                     state.update {
                                         TodayScreenState.Loading(shouldAskForUnits = true)
                                     }
                                 } else {
                                     todayUiState.update { oldState ->
-                                        oldState.copy(selectedUnits = it.second)
+                                        oldState.copy(selectedUnits = prefs.units)
                                     }
-                                    getLocationInfo(it.first)
-                                    getCurrentWeatherData(
-                                        it.first,
-                                        units = it.second ?: Units.STANDARD
-                                    )
+                                    prefs.location?.let { loc ->
+                                        val location = Location("").apply {
+                                            latitude = loc.first
+                                            longitude = loc.second
+                                        }
+                                        getLocationInfo(location)
+
+                                        getCurrentWeatherData(
+                                            location,
+                                            units = prefs.units
+                                        )
+                                    }
                                 }
                             }
                     }
@@ -87,6 +83,7 @@ class TodayViewModel(
                             )
                         }
                     }
+
                     NetworkStatus.Unknown -> {
                         val userMessage = UserMessage(
                             id = 0,
@@ -117,13 +114,9 @@ class TodayViewModel(
 
             is TodayUiEvent.ChangeUnits -> {
                 viewModelScope.launch {
-                    userPrefsRepository.changeUnits(event.units).also {
-                        todayUiState.update { oldUiState ->
-                            oldUiState.copy(
-                                selectedUnits = event.units,
-                                shouldAskForUnits = false
-                            )
-                        }
+                    userPrefsRepository.changeUnits(event.units)
+                    state.update {
+                        TodayScreenState.Loading(shouldAskForUnits = false)
                     }
                 }
             }
