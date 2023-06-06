@@ -30,10 +30,7 @@ fun WeatherInfoItem(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontWeight = FontWeight.Light,
-                fontSize = 20.sp
-            )
+            style = MaterialTheme.typography.titleLarge
         )
         val degreeSpanStyle = SpanStyle(
             baselineShift = BaselineShift.Superscript,
@@ -46,19 +43,14 @@ fun WeatherInfoItem(
                     withStyle(degreeSpanStyle) {
                         append("o")
                     }
+                    append("C")
                 },
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.bodyMedium
             )
         } else {
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

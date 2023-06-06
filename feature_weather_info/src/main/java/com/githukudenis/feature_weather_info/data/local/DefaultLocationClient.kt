@@ -3,10 +3,8 @@ package com.githukudenis.feature_weather_info.data.local
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
-import android.location.LocationManager
 import android.os.Looper
 import com.githukudenis.feature_weather_info.common.DispatcherProvider
-import com.githukudenis.feature_weather_info.util.hasLocationPermission
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -23,22 +21,9 @@ class DefaultLocationClient(
     private val client: FusedLocationProviderClient,
     private val dispatcherProvider: DispatcherProvider
 ) : LocationClient {
-    @SuppressLint("MissingPermission")
-    override suspend fun getCurrentLocationData(): Flow<Location> {
-        return callbackFlow {
-            if (!context.hasLocationPermission()) {
-                throw LocationClient.LocationException("Location permission must be granted!")
-            }
-            val locationManager =
-                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            val isNetworkEnabled =
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
-            if (!isGpsEnabled && !isNetworkEnabled) {
-                throw LocationClient.LocationException("GPS disabled")
-            }
-
+    override val locationData: Flow<Location>
+        @SuppressLint("MissingPermission")
+        get() = callbackFlow {
             val locationRequest = LocationRequest.create()
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
 
@@ -62,5 +47,4 @@ class DefaultLocationClient(
                 client.removeLocationUpdates(locationCallback)
             }
         }.flowOn(dispatcherProvider.ioDispatcher)
-    }
 }

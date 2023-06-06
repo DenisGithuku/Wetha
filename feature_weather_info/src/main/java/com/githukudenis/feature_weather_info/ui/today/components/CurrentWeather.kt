@@ -55,14 +55,13 @@ fun CurrentWeatherItem(
                 withStyle(style = degreeStyle) {
                     append("o")
                 }
+                append("C")
             },
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.ExtraBold
-            )
+            style = MaterialTheme.typography.headlineMedium
         )
         Text(
             text = main,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.headlineSmall
         )
     }
 }

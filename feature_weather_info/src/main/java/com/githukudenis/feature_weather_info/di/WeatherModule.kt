@@ -3,6 +3,8 @@ package com.githukudenis.feature_weather_info.di
 import com.githukudenis.feature_weather_info.common.Constants
 import com.githukudenis.feature_weather_info.common.DispatcherProvider
 import com.githukudenis.feature_weather_info.data.api.OpenWeatherApi
+import com.githukudenis.feature_weather_info.data.local.ConnectionProvider
+import com.githukudenis.feature_weather_info.data.local.ConnectionProviderImpl
 import com.githukudenis.feature_weather_info.data.local.DefaultLocationClient
 import com.githukudenis.feature_weather_info.data.local.LocationClient
 import com.githukudenis.feature_weather_info.data.local.UserPrefsRepositoryImpl
@@ -10,7 +12,6 @@ import com.githukudenis.feature_weather_info.data.repository.RemoteWeatherDataSo
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
-import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import org.slf4j.LoggerFactory
 
 val weatherModule = module {
     single<FusedLocationProviderClient> {
@@ -41,7 +43,7 @@ val weatherModule = module {
     }
 
     single<UserPrefsRepository> {
-        UserPrefsRepositoryImpl(androidContext())
+        UserPrefsRepositoryImpl(androidContext(), get())
     }
 
     single {
@@ -63,7 +65,7 @@ val weatherModule = module {
                 gson()
             }
             install(Logging) {
-                level = LogLevel.HEADERS
+                level = LogLevel.ALL
                 logger = Logger.DEFAULT
             }
         }
@@ -82,5 +84,9 @@ val weatherModule = module {
             defaultDispatcher = Dispatchers.Default,
             unconfinedDispatcher = Dispatchers.Unconfined
         )
+    }
+
+    single<ConnectionProvider> {
+        ConnectionProviderImpl(androidContext(), get())
     }
 }

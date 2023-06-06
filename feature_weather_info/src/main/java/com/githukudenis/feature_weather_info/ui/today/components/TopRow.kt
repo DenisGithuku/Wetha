@@ -40,7 +40,6 @@ fun TopRow(
 
     Row(
         modifier = modifier
-            .padding(12.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -55,45 +54,45 @@ fun TopRow(
                 contentDescription = context.getString(R.string.menu_icon)
             )
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .clip(shape = RoundedCornerShape(32.dp))
-                .background(color = MaterialTheme.colorScheme.secondaryContainer)
-                .clickable {
-                    onChangeTheme(
-                        if (appTheme == Theme.LIGHT) Theme.DARK else Theme.LIGHT
-                    )
-                }
-                .padding(4.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.light_mode),
-                contentDescription = "Light",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = if (appTheme == Theme.LIGHT) Color(0xFF1471FD) else Color.Transparent,
-                        shape = CircleShape
-                    )
-                    .padding(4.dp)
-
-            )
-            Icon(
-                painter = painterResource(id = R.drawable.dark_mode),
-                contentDescription = "Dark",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = if (appTheme == Theme.DARK) Color(0xFF1471FD) else Color.Transparent,
-                        shape = CircleShape
-                    )
-                    .padding(4.dp)
-            )
-        }
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.spacedBy(12.dp),
+//            modifier = Modifier
+//                .clip(shape = RoundedCornerShape(32.dp))
+//                .background(color = MaterialTheme.colorScheme.secondaryContainer)
+//                .clickable {
+//                    onChangeTheme(
+//                        if (appTheme == Theme.LIGHT) Theme.DARK else Theme.LIGHT
+//                    )
+//                }
+//                .padding(4.dp)
+//        ) {
+//            Icon(
+//                painter = painterResource(R.drawable.light_mode),
+//                contentDescription = "Light",
+//                tint = MaterialTheme.colorScheme.onPrimary,
+//                modifier = Modifier
+//                    .size(32.dp)
+//                    .background(
+//                        color = if (appTheme == Theme.LIGHT) Color(0xFF1471FD) else Color.Transparent,
+//                        shape = CircleShape
+//                    )
+//                    .padding(4.dp)
+//
+//            )
+//            Icon(
+//                painter = painterResource(id = R.drawable.dark_mode),
+//                contentDescription = "Dark",
+//                tint = MaterialTheme.colorScheme.onPrimary,
+//                modifier = Modifier
+//                    .size(32.dp)
+//                    .background(
+//                        color = if (appTheme == Theme.DARK) Color(0xFF1471FD) else Color.Transparent,
+//                        shape = CircleShape
+//                    )
+//                    .padding(4.dp)
+//            )
+//        }
     }
 }
 

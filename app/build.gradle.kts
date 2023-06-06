@@ -96,12 +96,17 @@ dependencies {
     implementation(libs.flowViewModel)
 
     implementation(libs.systemUiController)
+    implementation(libs.accompanistPermissions)
 
     implementation(libs.timber)
 
+    implementation(libs.work)
+
     implementation(libs.koin)
+    implementation(libs.koinCore)
     implementation(libs.koinCompose)
     implementation(libs.koinAndroid)
     implementation(libs.koinAnnotations)
+    implementation(libs.koinWorkManager)
     ksp(libs.koinKsp)
 }
