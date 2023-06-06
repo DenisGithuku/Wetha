@@ -56,9 +56,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -84,7 +84,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayRoute(
     snackbarHostState: SnackbarHostState,
@@ -138,7 +137,14 @@ fun TodayRoute(
 
             is TodayScreenState.Error -> {
                 ErrorScreen(
-                    error = currentState.userMessages.first(),
+                    error = currentState.userMessages
+                        .firstNotNullOf {
+                        UserMessage(
+                            id = 0,
+                            description = "Could not fetch latest updates. Please try again",
+                            messageType = MessageType.ERROR
+                        )
+                    },
                     onRetry = {
                         todayViewModel.onEvent(TodayUiEvent.Retry)
                     }
@@ -163,12 +169,14 @@ private fun ErrorScreen(
             text = "Oops",
             style = MaterialTheme.typography.headlineLarge
         )
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = error.description ?: "An unknown error occurred",
             style = MaterialTheme.typography.bodyMedium.copy(),
             color = MaterialTheme.colorScheme.onBackground.copy(
-                alpha = 0.7f
-            )
+                alpha = 0.8f
+            ),
+            textAlign = TextAlign.Justify
         )
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedButton(
@@ -250,7 +258,7 @@ private fun LoadedScreen(
                     modifier = Modifier
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(items = units) {
                         FilterChip(
@@ -265,7 +273,7 @@ private fun LoadedScreen(
                             },
                             shape = RoundedCornerShape(32.dp),
                             onClick = {
-                                onChangeUnits(selectedUnits.value ?: return@FilterChip)
+                                onChangeUnits(it)
                             },
                             label = {
                                 Text(it.name.lowercase().replaceFirstChar { it.uppercase() })

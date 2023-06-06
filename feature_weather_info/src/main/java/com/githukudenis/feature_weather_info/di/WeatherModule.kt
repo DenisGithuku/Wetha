@@ -3,6 +3,8 @@ package com.githukudenis.feature_weather_info.di
 import com.githukudenis.feature_weather_info.common.Constants
 import com.githukudenis.feature_weather_info.common.DispatcherProvider
 import com.githukudenis.feature_weather_info.data.api.OpenWeatherApi
+import com.githukudenis.feature_weather_info.data.local.ConnectionProvider
+import com.githukudenis.feature_weather_info.data.local.ConnectionProviderImpl
 import com.githukudenis.feature_weather_info.data.local.DefaultLocationClient
 import com.githukudenis.feature_weather_info.data.local.LocationClient
 import com.githukudenis.feature_weather_info.data.local.UserPrefsRepositoryImpl
@@ -54,7 +56,7 @@ val weatherModule = module {
     }
 
     viewModel {
-        TodayViewModel(get(), get(), get())
+        TodayViewModel(get(), get(), get(), get())
     }
 
     single<OpenWeatherApi> {
@@ -82,5 +84,9 @@ val weatherModule = module {
             defaultDispatcher = Dispatchers.Default,
             unconfinedDispatcher = Dispatchers.Unconfined
         )
+    }
+
+    single<ConnectionProvider> {
+        ConnectionProviderImpl(androidContext(), get())
     }
 }

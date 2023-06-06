@@ -6,24 +6,33 @@ import androidx.lifecycle.viewModelScope
 import com.githukudenis.feature_weather_info.common.MessageType
 import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.common.UserMessage
+import com.githukudenis.feature_weather_info.data.local.ConnectionProvider
+import com.githukudenis.feature_weather_info.data.local.NetworkStatus
 import com.githukudenis.feature_weather_info.data.local.LocationClient
 import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TodayViewModel(
     private val weatherRepository: WeatherRepository,
     private val userPrefsRepository: UserPrefsRepository,
-    private val locationClient: LocationClient
+    private val locationClient: LocationClient,
+    private val connectionProvider: ConnectionProvider
 ) : ViewModel() {
 
     private val todayUiState = MutableStateFlow(TodayUiState())
+
+
     var state = MutableStateFlow<TodayScreenState>(TodayScreenState.Loading())
         private set
 
@@ -33,23 +42,70 @@ class TodayViewModel(
 
     private fun initialize() {
         viewModelScope.launch {
-            combine(
-                userPrefsRepository.userPrefs,
-                locationClient.getCurrentLocationData()
-            ) { prefs, location ->
-                Pair(location, prefs.units)
-            }
-                .distinctUntilChanged()
-                .collectLatest {
-                    if (it.second == null) {
-                        state.update {
-                            TodayScreenState.Loading(shouldAskForUnits = true)
+            connectionProvider.networkStatus.collectLatest { connectionState ->
+                when (connectionState) {
+                    NetworkStatus.Connected -> {
+                        combine(
+                            userPrefsRepository.userPrefs,
+                            locationClient.getCurrentLocationData()
+                        ) { prefs, location ->
+                            Pair(location, prefs.units)
                         }
-                    } else {
-                        getLocationInfo(it.first)
-                        getCurrentWeatherData(it.first, units = it.second ?: Units.STANDARD)
+                            .distinctUntilChanged()
+                            .collectLatest {
+                                if (it.second == null) {
+                                    state.update {
+                                        TodayScreenState.Loading(shouldAskForUnits = true)
+                                    }
+                                } else {
+                                    todayUiState.update { oldState ->
+                                        oldState.copy(selectedUnits = it.second)
+                                    }
+                                    getLocationInfo(it.first)
+                                    getCurrentWeatherData(
+                                        it.first,
+                                        units = it.second ?: Units.STANDARD
+                                    )
+                                }
+                            }
+                    }
+
+                    NetworkStatus.Disconnected -> {
+                        val userMessage = UserMessage(
+                            id = 0,
+                            description = "Connection unavailable. Please try connecting again!",
+                            messageType = MessageType.ERROR
+                        )
+
+                        val userMessages = TodayScreenState.Error().userMessages.toMutableList()
+                            .apply {
+                                add(userMessage)
+                            }
+                        state.update {
+                            TodayScreenState.Error(
+                                userMessages = userMessages
+                            )
+                        }
+                    }
+                    NetworkStatus.Unknown -> {
+                        val userMessage = UserMessage(
+                            id = 0,
+                            description = "Connection unavailable. Please try connecting again!",
+                            messageType = MessageType.ERROR
+                        )
+
+                        val userMessages = TodayScreenState.Error().userMessages.toMutableList()
+                            .apply {
+                                add(userMessage)
+                            }
+                        state.update {
+                            TodayScreenState.Error(
+                                userMessages = userMessages
+                            )
+                        }
                     }
                 }
+            }
         }
     }
 
@@ -65,7 +121,7 @@ class TodayViewModel(
                         todayUiState.update { oldUiState ->
                             oldUiState.copy(
                                 selectedUnits = event.units,
-                                shouldAskForUnits = !todayUiState.value.shouldAskForUnits
+                                shouldAskForUnits = false
                             )
                         }
                     }

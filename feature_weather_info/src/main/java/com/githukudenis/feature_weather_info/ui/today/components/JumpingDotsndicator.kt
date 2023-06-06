@@ -30,7 +30,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun JumpingBubblesIndicator(
-    animationDelay: Int = 1500,
+    animationDelay: Int = 500,
     indicatorSize: Dp = 12.dp,
     indicatorColor: Color = MaterialTheme.colorScheme.secondary
 ) {

@@ -59,13 +59,13 @@ val Typography = Typography(
     headlineLarge = TextStyle(
         fontFamily = QuickSand,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 24.sp,
-        lineHeight = 18.sp
+        fontSize = 32.sp,
+        lineHeight = 36.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = QuickSand,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 20.sp,
+        fontSize = 24.sp,
         lineHeight = 26.sp
     ),
     headlineSmall = TextStyle(
