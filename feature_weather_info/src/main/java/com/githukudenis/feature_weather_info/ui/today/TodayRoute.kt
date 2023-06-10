@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -139,12 +140,12 @@ fun TodayRoute(
                 ErrorScreen(
                     error = currentState.userMessages
                         .firstNotNullOf {
-                        UserMessage(
-                            id = 0,
-                            description = "Could not fetch latest updates. Please try again",
-                            messageType = MessageType.ERROR
-                        )
-                    },
+                            UserMessage(
+                                id = 0,
+                                description = "Could not fetch latest updates. Please try again",
+                                messageType = MessageType.ERROR
+                            )
+                        },
                     onRetry = {
                         currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
                     }
@@ -329,30 +330,35 @@ private fun LoadedScreen(
                 main = todayUiState.currentWeatherState.main.toString()
             )
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.background
         ) {
-            todayUiState.currentWeatherState.temperature?.let {
-                WeatherInfoItem(
-                    title = "Temp",
-                    value = it.toString(),
-                    tempInfoItem = true
-                )
-            }
-            todayUiState.currentWeatherState.windSpeed?.let {
-                WeatherInfoItem(
-                    title = "Wind",
-                    value = "$it"
-                )
-            }
-            todayUiState.currentWeatherState.humidity?.let {
-                WeatherInfoItem(
-                    title = "Humidity",
-                    value = " $it %"
-                )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                todayUiState.currentWeatherState.temperature?.let {
+                    WeatherInfoItem(
+                        title = "Temp",
+                        value = it.toString(),
+                        tempInfoItem = true
+                    )
+                }
+                todayUiState.currentWeatherState.windSpeed?.let {
+                    WeatherInfoItem(
+                        title = "Wind",
+                        value = "$it"
+                    )
+                }
+                todayUiState.currentWeatherState.humidity?.let {
+                    WeatherInfoItem(
+                        title = "Humidity",
+                        value = " $it %"
+                    )
+                }
             }
         }
         HourlySection(

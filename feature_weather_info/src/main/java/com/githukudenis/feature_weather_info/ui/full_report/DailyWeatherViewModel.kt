@@ -127,7 +127,7 @@ class DailyWeatherViewModel(
                     is Resource.Success -> {
                         _state.update {
                             DailyUpdateState.Loaded(
-                                state = DailyUpdateUiState(result.data?.daily ?: emptyList())
+                                state = DailyUpdateUiState(result.data?.daily ?: emptyList(), units = units)
                             )
                         }
                     }
