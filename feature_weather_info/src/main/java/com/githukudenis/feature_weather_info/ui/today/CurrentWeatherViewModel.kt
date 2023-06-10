@@ -16,9 +16,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class TodayViewModel(
+class CurrentWeatherViewModel(
     private val weatherRepository: WeatherRepository,
     private val userPrefsRepository: UserPrefsRepository,
     private val connectionProvider: ConnectionProvider
@@ -151,7 +150,7 @@ class TodayViewModel(
 
     private fun getCurrentWeatherData(location: Location, units: Units) {
         viewModelScope.launch {
-            weatherRepository.getCurrentWeather(location, units)
+            weatherRepository.getCurrentData(location, units)
                 .collectLatest { result ->
                     when (result) {
                         is Resource.Error -> {

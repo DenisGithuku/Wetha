@@ -5,4 +5,5 @@
     <string name="dark">Dark</string>
     <string name="unit_dialog_title">Preferred units</string>
     <string name="ok">Ok</string>
+    <string name="loading_indicator">Fetching updates...</string>
 </resources>

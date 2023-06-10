@@ -95,7 +95,8 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.onEvent(MainEvent.ChangeAppTheme(newTheme))
                                 },
                                 snackbarHostState = snackbarHostState,
-                                navHostController = navHostController
+                                navHostController = navHostController,
+                                context = this
                             )
                         }
                     }

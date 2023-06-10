@@ -7,7 +7,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,7 +77,6 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -89,12 +87,12 @@ import kotlin.math.roundToInt
 @Composable
 fun TodayRoute(
     snackbarHostState: SnackbarHostState,
-    todayViewModel: TodayViewModel,
+    currentWeatherViewModel: CurrentWeatherViewModel,
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
     onViewFullReport: () -> Unit
 ) {
-    val uiState by todayViewModel.state.collectAsStateWithLifecycle()
+    val uiState by currentWeatherViewModel.state.collectAsStateWithLifecycle()
 
     Crossfade(
         targetState = uiState,
@@ -109,7 +107,7 @@ fun TodayRoute(
                 LoadingScreen(
                     shouldAskForUnits = currentState.shouldAskForUnits,
                     onSelectUnits = { units ->
-                        todayViewModel.onEvent(
+                        currentWeatherViewModel.onEvent(
                             TodayUiEvent.ChangeUnits(units)
                         )
                     }
@@ -122,11 +120,11 @@ fun TodayRoute(
                     todayUiState = currentState.todayUiState,
                     appTheme = appTheme,
                     onChangeUnits = {
-                        todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                        currentWeatherViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
                     },
                     onChangeTheme = onChangeAppTheme,
                     onShowUserMessage = { messageId, messageType ->
-                        todayViewModel.onEvent(
+                        currentWeatherViewModel.onEvent(
                             TodayUiEvent.OnShowUserMessage(
                                 messageId,
                                 messageType
@@ -148,7 +146,7 @@ fun TodayRoute(
                         )
                     },
                     onRetry = {
-                        todayViewModel.onEvent(TodayUiEvent.Retry)
+                        currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
                     }
                 )
             }
@@ -455,79 +453,6 @@ fun HourlySection(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-
-//        if (hourLyForeCast.isNotEmpty()) {
-//            val animationProgress = remember {
-//                Animatable(0f)
-//            }
-//
-//            LaunchedEffect(hourLyForeCast) {
-//                animationProgress.animateTo(
-//                    1f, tween(1000)
-//                )
-//            }
-//
-//            val textMeasurer = rememberTextMeasurer()
-//
-//            Spacer(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .aspectRatio(3 / 2f)
-//                    .drawWithCache {
-//                        val tempList =
-//                            hourLyForeCast
-//                                .take(6)
-//                                .mapNotNull { it.temperature }
-//                                .map { it.toFloat() }
-//
-//                        val path = generateGraphPath(tempList, size)
-//                        val filledPath = Path()
-//                        filledPath.addPath(path)
-//                        filledPath.relativeLineTo(0f, size.height)
-//                        filledPath.lineTo(0f, size.height)
-//                        filledPath.close()
-//
-//
-//
-//                        onDrawBehind {
-//                            drawPath(path, Color(0xFF3FA2BA), style = Stroke(width = 2.dp.toPx()))
-//
-//                            clipRect(right = size.width * animationProgress.value) {
-//                                drawPath(
-//                                    filledPath,
-//                                    brush = Brush.verticalGradient(
-//                                        listOf(
-//                                            Color(0xFFE4EEF8),
-//                                            Color.Transparent
-//                                        )
-//                                    ),
-//                                    style = Fill
-//                                )
-//                            }
-//
-//                            drawPoints(
-//                                points = generatePoints(tempList, size),
-//                                pointMode = PointMode.Points,
-//                                strokeWidth = 8.dp.toPx(),
-//                                cap = StrokeCap.Round,
-//                                color = Color(0xFF3FA2BA),
-//                            )
-//
-//                            hourLyForeCast.forEach { foreCast ->
-//                                drawText(
-//                                    textMeasurer = textMeasurer,
-//                                    text = buildAnnotatedString {
-//                                        withStyle(SpanStyle()) {
-//                                            append()
-//                                        }
-//                                    },
-//                                )
-//                            }
-//
-//                        }
-//                    }
-//            )
-//        }
     }
 }
 

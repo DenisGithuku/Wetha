@@ -11,7 +11,8 @@ import com.githukudenis.feature_weather_info.data.local.UserPrefsRepositoryImpl
 import com.githukudenis.feature_weather_info.data.repository.RemoteWeatherDataSource
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
-import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
+import com.githukudenis.feature_weather_info.ui.full_report.DailyWeatherViewModel
+import com.githukudenis.feature_weather_info.ui.today.CurrentWeatherViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -27,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
-import org.slf4j.LoggerFactory
 
 val weatherModule = module {
     single<FusedLocationProviderClient> {
@@ -55,8 +55,12 @@ val weatherModule = module {
         )
     }
 
-    viewModel {
-        TodayViewModel(get(), get(), get())
+    viewModel<CurrentWeatherViewModel> {
+        CurrentWeatherViewModel(get(), get(), get())
+    }
+
+    viewModel<DailyWeatherViewModel> {
+        DailyWeatherViewModel(get(), get(), get())
     }
 
     single<OpenWeatherApi> {
