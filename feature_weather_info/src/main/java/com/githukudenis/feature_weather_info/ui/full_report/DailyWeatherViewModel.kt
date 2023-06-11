@@ -36,7 +36,6 @@ class DailyWeatherViewModel(
                 when (connectionState) {
                     NetworkStatus.Connected -> {
                         userPrefsRepository.userPrefs
-                            .distinctUntilChanged()
                             .collectLatest { prefs ->
                                 prefs.location?.let { loc ->
                                     val location = Location("").apply {

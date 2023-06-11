@@ -11,6 +11,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -139,13 +141,7 @@ fun TodayRoute(
             is TodayScreenState.Error -> {
                 ErrorScreen(
                     error = currentState.userMessages
-                        .firstNotNullOf {
-                            UserMessage(
-                                id = 0,
-                                description = "Could not fetch latest updates. Please try again",
-                                messageType = MessageType.ERROR
-                            )
-                        },
+                        .first(),
                     onRetry = {
                         currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
                     }
@@ -192,7 +188,7 @@ private fun ErrorScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LoadedScreen(
     snackbarHostState: SnackbarHostState,
@@ -335,28 +331,62 @@ private fun LoadedScreen(
             color = MaterialTheme.colorScheme.background
         ) {
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                maxItemsInEachRow = 3,
             ) {
                 todayUiState.currentWeatherState.temperature?.let {
                     WeatherInfoItem(
                         title = "Temp",
                         value = it.toString(),
+                        icon = R.drawable.ic_thermometer,
                         tempInfoItem = true
                     )
                 }
                 todayUiState.currentWeatherState.windSpeed?.let {
                     WeatherInfoItem(
                         title = "Wind",
+                        icon = R.drawable.ic_wind_solid,
                         value = "$it"
                     )
                 }
                 todayUiState.currentWeatherState.humidity?.let {
                     WeatherInfoItem(
                         title = "Humidity",
+                        icon = R.drawable.ic_humidity,
                         value = " $it %"
+                    )
+                }
+                todayUiState.currentWeatherState.pressure?.let {
+                    WeatherInfoItem(
+                        title = "Pressure",
+                        value = "$it hPa",
+                        icon = R.drawable.ic_pressure
+                    )
+                }
+                todayUiState.currentWeatherState.uvi?.let {
+                    WeatherInfoItem(
+                        title = "UVI",
+                        value = "$it",
+                        icon = R.drawable.ic_uv_index
+                    )
+                }
+                todayUiState.currentWeatherState.sunrise?.let {
+                    val formattedTime = formatTime("hh:mm a", it)
+                    WeatherInfoItem(
+                        title = "Sunrise",
+                        value = formattedTime,
+                        icon = R.drawable.ic_sunrise
+                    )
+                }
+                todayUiState.currentWeatherState.sunset?.let {
+                    val formattedTime = formatTime("hh:mm a", it)
+                    WeatherInfoItem(
+                        title = "Sunset",
+                        value = formattedTime,
+                        icon = R.drawable.ic_sunset
                     )
                 }
             }
@@ -366,6 +396,18 @@ private fun LoadedScreen(
             onViewFullReport = onViewFullReport
         )
     }
+}
+
+private fun formatTime(pattern: String, time: Int): String {
+    val formatter = DateTimeFormatter.ofPattern(
+        pattern,
+        Locale.getDefault()
+    )
+    val parsedTime = LocalDateTime.ofInstant(
+        Instant.ofEpochMilli(time * 1_000L),
+        ZoneId.systemDefault()
+    )
+    return parsedTime.format(formatter)
 }
 
 @OptIn(ExperimentalTextApi::class)

@@ -39,7 +39,6 @@ class CurrentWeatherViewModel(
                 when (connectionState) {
                     NetworkStatus.Connected -> {
                         userPrefsRepository.userPrefs
-                            .distinctUntilChanged()
                             .collectLatest { prefs ->
                                 if (prefs.units == null) {
                                     state.update {
@@ -176,14 +175,18 @@ class CurrentWeatherViewModel(
                         }
 
                         is Resource.Success -> {
-                            state.update { oldState ->
+                            state.update {
                                 val currentWeatherState = CurrentWeatherState(
                                     icon = result.data?.current?.weather?.get(0)?.icon,
                                     temperature = result.data?.current?.temp,
                                     windSpeed = result.data?.current?.wind_speed,
                                     humidity = result.data?.current?.humidity,
                                     main = result.data?.current?.weather?.get(0)?.main,
-                                    description = result.data?.current?.weather?.get(0)?.description
+                                    description = result.data?.current?.weather?.get(0)?.description,
+                                    pressure = result.data?.current?.pressure,
+                                    uvi = result.data?.current?.uvi,
+                                    sunrise = result.data?.current?.sunrise,
+                                    sunset = result.data?.current?.sunset
                                 )
 
                                 val hourlyForeCastState = result.data?.hourly?.let { hourlyData ->

@@ -11,6 +11,7 @@ import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.data.repository.UserPrefs
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
@@ -22,7 +23,9 @@ class UserPrefsRepositoryImpl(
     private val Context.dataStore by preferencesDataStore(name = Constants.user_prefs)
 
     override val userPrefs: Flow<UserPrefs>
-        get() = context.dataStore.data.map { prefs ->
+        get() = context.dataStore.data
+            .distinctUntilChanged()
+            .map { prefs ->
             val theme = prefs[PreferenceKeys.theme]?.let { Theme.valueOf(it) }
             val units = prefs[PreferenceKeys.units]?.let { Units.valueOf(it) }
             val location = prefs[PreferenceKeys.location]?.let { Pair(it.substringBefore(',').toDouble(), it.substringAfter(",").toDouble()) }
