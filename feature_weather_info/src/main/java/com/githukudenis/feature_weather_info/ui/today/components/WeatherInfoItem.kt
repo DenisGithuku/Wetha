@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 fun WeatherInfoItem(
     title: String,
     value: String,
-    icon: Int,
+    icon: Int? = null,
     tempInfoItem: Boolean = false
 ) {
     Column(
@@ -38,13 +38,15 @@ fun WeatherInfoItem(
             text = title,
             style = MaterialTheme.typography.titleLarge
         )
-        Image(
-            painter = painterResource(id = icon),
-            contentDescription = title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(24.dp),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-        )
+        icon?.let { painterResource(id = it) }?.let {
+            Image(
+                painter = it,
+                contentDescription = title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+            )
+        }
         val degreeSpanStyle = SpanStyle(
             baselineShift = BaselineShift.Superscript,
             fontSize = 10.sp
