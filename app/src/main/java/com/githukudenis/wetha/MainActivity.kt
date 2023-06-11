@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -57,6 +58,10 @@ class MainActivity : ComponentActivity() {
             window,
             false
         )
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+        )
 
         setupLocationRequestWorker(this)
 
@@ -77,7 +82,7 @@ class MainActivity : ComponentActivity() {
             val useDarkIcons = appState.appTheme != Theme.DARK
             DisposableEffect(systemUiController, useDarkIcons) {
                 systemUiController.setStatusBarColor(
-                    color = Color(0XFFE4EEF8),
+                    color = Color.Transparent,
                     darkIcons = useDarkIcons
                 )
                 onDispose {}
@@ -95,7 +100,8 @@ class MainActivity : ComponentActivity() {
                                     mainViewModel.onEvent(MainEvent.ChangeAppTheme(newTheme))
                                 },
                                 snackbarHostState = snackbarHostState,
-                                navHostController = navHostController
+                                navHostController = navHostController,
+                                context = this
                             )
                         }
                     }

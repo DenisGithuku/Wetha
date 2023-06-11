@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Wetha</string>
+    <string name="nav_graph">wetha_updates</string>
 </resources>

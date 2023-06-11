@@ -41,12 +41,12 @@ fun CurrentWeatherItem(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             painter = painterResource(id = icon),
-            modifier = Modifier.size(200.dp),
+            modifier = Modifier.size(100.dp),
             contentDescription = "Weather icon"
         )
         Text(

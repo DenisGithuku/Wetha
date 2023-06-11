@@ -26,6 +26,10 @@ data class CurrentWeatherState(
     val description: String? = null,
     val windSpeed: Double? = null,
     val humidity: Int? = null,
+    val pressure: Int? = null,
+    val sunrise: Int? = null,
+    val sunset: Int? = null,
+    val uvi: Double? = null
 )
 
 data class HourlyForeCastState(

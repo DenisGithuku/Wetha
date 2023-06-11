@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.lifecycleViewModelKtx)
     implementation(libs.viewModelSavedState)
 
+    implementation(libs.glide)
+
     ksp(libs.ktorfitKsp)
     implementation(libs.ktorFit)
 
