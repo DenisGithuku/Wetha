@@ -5,6 +5,7 @@ import android.graphics.PointF
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -49,11 +52,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PointMode
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -80,9 +88,11 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -200,20 +210,14 @@ private fun LoadedScreen(
     onViewFullReport: () -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
-    val time = LocalDateTime.now()
+    val today = LocalDateTime.now()
         .format(dateFormatter)
-
-    val dialogProperties = DialogProperties()
 
     val units = listOf(
         Units.METRIC,
         Units.STANDARD,
         Units.IMPERIAL,
     )
-
-    val selectedUnits = remember {
-        mutableStateOf(todayUiState.selectedUnits)
-    }
 
     val modalBottomSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -281,7 +285,6 @@ private fun LoadedScreen(
         }
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -311,7 +314,7 @@ private fun LoadedScreen(
         todayUiState.locationState.name?.let {
             LocationContainer(
                 name = it,
-                date = time
+                date = today
             )
         }
         val icon: Int? = todayUiState.currentWeatherState.icon?.let { iconId ->
@@ -366,13 +369,6 @@ private fun LoadedScreen(
                         icon = R.drawable.ic_pressure
                     )
                 }
-                todayUiState.currentWeatherState.uvi?.let {
-                    WeatherInfoItem(
-                        title = "UVI",
-                        value = "$it",
-                        icon = R.drawable.ic_uv_index
-                    )
-                }
                 todayUiState.currentWeatherState.sunrise?.let {
                     val formattedTime = formatTime("hh:mm a", it)
                     WeatherInfoItem(
@@ -387,6 +383,13 @@ private fun LoadedScreen(
                         title = "Sunset",
                         value = formattedTime,
                         icon = R.drawable.ic_sunset
+                    )
+                }
+                todayUiState.currentWeatherState.uvi?.let {
+                    WeatherInfoItem(
+                        title = "UVI",
+                        value = "$it",
+                        icon = R.drawable.ic_uv_index
                     )
                 }
             }
@@ -435,6 +438,48 @@ fun HourlySection(
                     text = "See full report",
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (hourLyForeCast.isNotEmpty()) {
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(3 / 2f)
+                .drawWithCache {
+                    val tempList = hourLyForeCast
+                        .take(12)
+                        .mapNotNull { it.temperature?.toFloat() }
+
+                    val path = generateGraphPath(tempList, size)
+                    val filledPath = Path().apply {
+                        addPath(path)
+                        relativeLineTo(0f, size.height)
+                        lineTo(0f, size.height)
+                        close()
+                    }
+                    onDrawBehind {
+                        drawPath(path, Color(0xFF3FA2BA), style = Stroke(width = 2.dp.toPx()))
+                        drawPath(
+                            filledPath,
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    Color(0xFFE4EEF8),
+                                    Color.Transparent
+                                )
+                            ),
+                            style = Fill
+                        )
+                        drawPoints(
+                            points = generatePoints(tempList, size),
+                            pointMode = PointMode.Points,
+                            strokeWidth = 10.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            color = Color(0xFF3FA2BA)
+                        )
+                    }
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
