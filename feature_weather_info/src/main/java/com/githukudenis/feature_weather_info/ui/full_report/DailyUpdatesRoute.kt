@@ -39,6 +39,7 @@ import com.githukudenis.feature_weather_info.data.model.Daily
 import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.ui.today.components.JumpingBubblesIndicator
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
+import com.githukudenis.feature_weather_info.ui.today.generateUnits
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import java.time.Instant
 import java.time.LocalDateTime
@@ -126,16 +127,19 @@ private fun Loaded(
                     )
                 )
             )
-            .systemBarsPadding()
             .padding(vertical = 16.dp, horizontal = 8.dp)
+            .systemBarsPadding()
     ) {
         item {
-            TomorrowWeatherItem(daily = dailyUpdates.first())
+            TomorrowWeatherItem(
+                daily = dailyUpdates.first(),
+                selectedUnits = selectedUnits
+            )
         }
         item {
             Text(
                 text = "In 7 days",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.headlineMedium
             )
         }
         items(
@@ -148,7 +152,8 @@ private fun Loaded(
 
 @Composable
 fun TomorrowWeatherItem(
-    daily: Daily
+    daily: Daily,
+    selectedUnits: Units
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -183,36 +188,52 @@ fun TomorrowWeatherItem(
             Text(
                 text = buildAnnotatedString {
                     append("${daily.feels_like.day.roundToInt()}")
-                    withStyle(SpanStyle(baselineShift = BaselineShift.Superscript)) {
-                        append("o")
+                    val formattedUnits = generateUnits(selectedUnits)
+                    if (selectedUnits == Units.METRIC) {
+                        withStyle(SpanStyle(baselineShift = BaselineShift.Superscript)) {
+                            append("o")
+                        }
                     }
+                    append(formattedUnits.first)
                 },
                 style = MaterialTheme.typography.displayLarge
             )
         }
     }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            WeatherInfoItem(
-                title = "Temp",
-                value = "${daily.feels_like.day.roundToInt()}",
-                tempInfoItem = true
-            )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        WeatherInfoItem(
+            title = "Temp",
+            value = buildAnnotatedString {
+                append("${daily.feels_like.day.roundToInt()}")
+                val formattedUnits = generateUnits(selectedUnits)
+                if (selectedUnits == Units.METRIC) {
+                    withStyle(SpanStyle(baselineShift = BaselineShift.Superscript)) {
+                        append("o")
+                    }
+                }
+                append(formattedUnits.first)
+            }.toString(),
+        )
 
-            WeatherInfoItem(
-                title = "Wind",
-                value = "${daily.wind_speed} km/h"
-            )
+        WeatherInfoItem(
+            title = "Wind",
+            value = buildAnnotatedString {
+                append(daily.wind_speed.roundToInt().toString())
+                val formattedUnits = generateUnits(selectedUnits)
+                append(formattedUnits.second)
+            }.text
+        )
 
-            WeatherInfoItem(
-                title = "Humidity",
-                value = "${daily.humidity} %"
-            )
+        WeatherInfoItem(
+            title = "Humidity",
+            value = "${daily.humidity} %"
+        )
 
-        }
     }
+}
 
 @Composable
 private fun WeatherItem(
@@ -240,7 +261,7 @@ private fun WeatherItem(
     ) {
         Text(
             text = date,
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.titleMedium
         )
         val icon = daily.weather[0].icon.run {
             WeatherIconMapper.icons.find {
@@ -251,7 +272,7 @@ private fun WeatherItem(
             Image(
                 painter = painterResource(id = ic),
                 contentDescription = "Weather icon",
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(40.dp),
                 contentScale = ContentScale.Crop
             )
         }
@@ -262,15 +283,23 @@ private fun WeatherItem(
 
         Text(
             text = buildAnnotatedString {
-                append(daily.temp.day.toString())
-                withStyle(SpanStyle(baselineShift = BaselineShift.Superscript)) {
-                    append("o")
+                append("${daily.temp.day.roundToInt()}")
+                val formattedUnits = generateUnits(selectedUnits)
+                if (selectedUnits == Units.METRIC) {
+                    withStyle(SpanStyle(baselineShift = BaselineShift.Superscript)) {
+                        append("o")
+                    }
                 }
+                append(formattedUnits.first)
             },
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            text = "${daily.wind_speed} km/h"
+            text = buildAnnotatedString {
+                append(daily.wind_speed.roundToInt().toString())
+                val formattedUnits = generateUnits(selectedUnits)
+                append(formattedUnits.second)
+            }
         )
     }
 }
