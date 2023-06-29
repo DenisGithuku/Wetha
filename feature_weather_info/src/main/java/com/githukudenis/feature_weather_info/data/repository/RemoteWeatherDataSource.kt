@@ -4,9 +4,9 @@ import android.location.Location
 import com.githukudenis.feature_weather_info.common.DispatcherProvider
 import com.githukudenis.feature_weather_info.common.Resource
 import com.githukudenis.feature_weather_info.data.api.OpenWeatherApi
-import com.githukudenis.feature_weather_info.data.model.LocationInfoResponse
-import com.githukudenis.feature_weather_info.data.model.CurrentWeatherResponse
-import com.githukudenis.feature_weather_info.data.model.DailyWeatherResponse
+import com.githukudenis.feature_weather_info.data.api.model.LocationInfoResponse
+import com.githukudenis.feature_weather_info.data.api.model.CurrentWeatherResponse
+import com.githukudenis.feature_weather_info.data.api.model.DailyWeatherResponse
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

@@ -13,7 +13,7 @@ object versions {
     val compose_nav = "2.5.3"
     val location = "21.0.1"
     val datastore = "1.0.0"
-    val room = "2.5.1"
+    val room = "2.5.2"
     val work = "2.8.1"
     val material = "1.1.0"
     val gson = "2.9.0"

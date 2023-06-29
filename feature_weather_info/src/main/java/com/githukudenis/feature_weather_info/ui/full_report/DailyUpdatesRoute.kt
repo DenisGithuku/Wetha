@@ -13,7 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +36,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.githukudenis.feature_weather_info.R
-import com.githukudenis.feature_weather_info.data.model.Daily
+import com.githukudenis.feature_weather_info.data.api.model.Daily
 import com.githukudenis.feature_weather_info.data.repository.Units
 import com.githukudenis.feature_weather_info.ui.today.components.JumpingBubblesIndicator
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
@@ -142,10 +143,13 @@ private fun Loaded(
                 style = MaterialTheme.typography.headlineMedium
             )
         }
-        items(
+        itemsIndexed(
             items = dailyUpdates.drop(2)
-        ) {
-            WeatherItem(daily = it, selectedUnits = selectedUnits)
+        ) { index, item ->
+            WeatherItem(daily = item, selectedUnits = selectedUnits)
+            if (index <= dailyUpdates.drop(2).size - 1) {
+                Divider()
+            }
         }
     }
 }
@@ -247,7 +251,7 @@ private fun WeatherItem(
         }
     val currentTime = LocalDateTime
         .ofInstant(
-            Instant.ofEpochMilli(daily.dt * 1_000L),
+            Instant.ofEpochMilli(daily.timestamp * 1_000L),
             ZoneId.systemDefault()
         )
     val date = formatter.format(currentTime)

@@ -1,9 +1,9 @@
 package com.githukudenis.feature_weather_info.data.api
 
 import com.githukudenis.feature_weather_info.BuildConfig
-import com.githukudenis.feature_weather_info.data.model.LocationInfoResponse
-import com.githukudenis.feature_weather_info.data.model.CurrentWeatherResponse
-import com.githukudenis.feature_weather_info.data.model.DailyWeatherResponse
+import com.githukudenis.feature_weather_info.data.api.model.LocationInfoResponse
+import com.githukudenis.feature_weather_info.data.api.model.CurrentWeatherResponse
+import com.githukudenis.feature_weather_info.data.api.model.DailyWeatherResponse
 import com.githukudenis.feature_weather_info.data.repository.Units
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Query

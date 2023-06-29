@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -93,63 +94,69 @@ import kotlin.math.roundToInt
 
 @Composable
 fun TodayRoute(
-    snackbarHostState: SnackbarHostState,
     currentWeatherViewModel: CurrentWeatherViewModel,
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
     onViewFullReport: () -> Unit
 ) {
     val uiState by currentWeatherViewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = SnackbarHostState()
 
-    Crossfade(
-        targetState = uiState,
-        label = "screen_state",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        )
-    ) {
-        when (val currentState = it) {
-            is TodayScreenState.Loading -> {
-                LoadingScreen(
-                    shouldAskForUnits = currentState.shouldAskForUnits,
-                    onSelectUnits = { units ->
-                        currentWeatherViewModel.onEvent(
-                            TodayUiEvent.ChangeUnits(units)
-                        )
-                    }
-                )
-            }
-
-            is TodayScreenState.Loaded -> {
-                LoadedScreen(
-                    snackbarHostState = snackbarHostState,
-                    todayUiState = currentState.todayUiState,
-                    appTheme = appTheme,
-                    onChangeUnits = {
-                        currentWeatherViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
-                    },
-                    onChangeTheme = onChangeAppTheme,
-                    onShowUserMessage = { messageId, messageType ->
-                        currentWeatherViewModel.onEvent(
-                            TodayUiEvent.OnShowUserMessage(
-                                messageId,
-                                messageType
+    Scaffold(
+        snackbarHost = {
+            snackbarHostState
+        }
+    ) { contentPadding ->
+        Crossfade(
+            targetState = uiState,
+            label = "screen_state",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        ) {
+            when (val currentState = it) {
+                is TodayScreenState.Loading -> {
+                    LoadingScreen(
+                        shouldAskForUnits = currentState.shouldAskForUnits,
+                        onSelectUnits = { units ->
+                            currentWeatherViewModel.onEvent(
+                                TodayUiEvent.ChangeUnits(units)
                             )
-                        )
-                    },
-                    onViewFullReport = onViewFullReport
-                )
-            }
+                        }
+                    )
+                }
 
-            is TodayScreenState.Error -> {
-                ErrorScreen(
-                    error = currentState.userMessages
-                        .first(),
-                    onRetry = {
-                        currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
-                    }
-                )
+                is TodayScreenState.Loaded -> {
+                    LoadedScreen(
+                        snackbarHostState = snackbarHostState,
+                        todayUiState = currentState.todayUiState,
+                        appTheme = appTheme,
+                        onChangeUnits = {
+                            currentWeatherViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                        },
+                        onChangeTheme = onChangeAppTheme,
+                        onShowUserMessage = { messageId, messageType ->
+                            currentWeatherViewModel.onEvent(
+                                TodayUiEvent.OnShowUserMessage(
+                                    messageId,
+                                    messageType
+                                )
+                            )
+                        },
+                        onViewFullReport = onViewFullReport
+                    )
+                }
+
+                is TodayScreenState.Error -> {
+                    ErrorScreen(
+                        error = currentState.userMessages
+                            .first(),
+                        onRetry = {
+                            currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
+                        }
+                    )
+                }
             }
         }
     }
@@ -216,7 +223,6 @@ private fun LoadedScreen(
     val modalBottomSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-
     if (todayUiState.userMessages.isNotEmpty()) {
         LaunchedEffect(snackbarHostState) {
             val userMessage = todayUiState.userMessages.first()
@@ -227,7 +233,6 @@ private fun LoadedScreen(
             userMessage.id?.let { onShowUserMessage(it, userMessage.messageType) }
         }
     }
-
     if (modalBottomSheetState.isVisible) {
         ModalBottomSheet(
             sheetState = modalBottomSheetState,
@@ -319,7 +324,7 @@ private fun LoadedScreen(
         icon?.let { iconId ->
             CurrentWeatherItem(
                 icon = iconId,
-                temp = todayUiState.currentWeatherState.temperature.toString(),
+                temp = todayUiState.currentWeatherState.temperature?.roundToInt().toString(),
                 selectedUnits = todayUiState.selectedUnits ?: Units.STANDARD,
                 main = todayUiState.currentWeatherState.main.toString()
             )
@@ -353,10 +358,15 @@ private fun LoadedScreen(
                         append(formattedUnits.first)
 
                     }
-                    WeatherInfoItem(title = "Temp", icon = R.drawable.ic_thermometer, value = value.toString())
+                    WeatherInfoItem(
+                        title = "Temp",
+                        icon = R.drawable.ic_thermometer,
+                        value = value.toString()
+                    )
                 }
                 todayUiState.currentWeatherState.windSpeed?.let {
-                    val formattedUnits = generateUnits(todayUiState.selectedUnits ?: Units.STANDARD)
+                    val formattedUnits =
+                        generateUnits(todayUiState.selectedUnits ?: Units.STANDARD)
                     WeatherInfoItem(
                         title = "Wind",
                         icon = R.drawable.ic_wind_solid,
@@ -633,8 +643,11 @@ private fun LoadingScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
         JumpingBubblesIndicator()
+        Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Fetching updates...")
     }
 }

@@ -13,7 +13,6 @@ import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -194,7 +193,7 @@ class CurrentWeatherViewModel(
                                         foreCast = hourlyData.map { hourly ->
                                             ForeCast(
                                                 icon = hourly.weather[0].icon,
-                                                time = hourly.dt,
+                                                time = hourly.timestamp,
                                                 temperature = hourly.temp
                                             )
                                         }

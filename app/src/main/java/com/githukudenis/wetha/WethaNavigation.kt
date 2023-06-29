@@ -18,7 +18,6 @@ import org.koin.androidx.compose.koinViewModel
 fun WethaNavigator(
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
-    snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
     context: Context
 ) {
@@ -31,7 +30,6 @@ fun WethaNavigator(
             composable(route = WethaDestination.Today.route) {
                 val currentWeatherViewModel: CurrentWeatherViewModel = koinViewModel()
                 TodayRoute(
-                    snackbarHostState = snackbarHostState,
                     currentWeatherViewModel = currentWeatherViewModel,
                     appTheme = appTheme,
                     onChangeAppTheme = onChangeAppTheme,

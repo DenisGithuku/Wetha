@@ -1,9 +1,12 @@
-package com.githukudenis.feature_weather_info.data.model
+package com.githukudenis.feature_weather_info.data.api.model
+
+import com.google.gson.annotations.SerializedName
 
 data class Daily(
     val clouds: Int,
     val dew_point: Double,
-    val dt: Int,
+    @SerializedName("dt")
+    val timestamp: Int,
     val feels_like: FeelsLike,
     val humidity: Int,
     val moon_phase: Double,
