@@ -66,7 +66,7 @@ The app depends on:
   
 6. [Material 3](https://m3.material.io/):  latest version of Google’s open-source design system.
   
-7. [Lifecycle components](androidx.lifecycle](https://developer.android.com/reference/androidx/lifecycle/package-summary) : Lifecycle-aware components perform actions in response to a change in the lifecycle status of another component, such as activities and fragments.
+7. [Lifecycle components](https://developer.android.com/reference/androidx/lifecycle/package-summary) : Lifecycle-aware components perform actions in response to a change in the lifecycle status of another component, such as activities and fragments.
   
 8. [Datastore](https://developer.android.com/jetpack/androidx/releases/datastore): Store data asynchronously, consistently, and transactionally, overcoming some of the drawbacks of SharedPreferences.
   
