@@ -58,11 +58,11 @@ The app depends on:
   
 2. [Koin](https://insert-koin.io/): Pragmatic dependency injection library.
   
-3. [Ktor]([GitHub - Foso/Ktorfit: HTTP client generator / KSP plugin for Kotlin Multiplatform (Android, iOS, Js, Jvm, Native) using KSP and Ktor clients inspired by Retrofit https://foso.github.io/Ktorfit](https://github.com/Foso/Ktorfit)): Ktorfit is a HTTP client/Kotlin Symbol Processor for Kotlin Multiplatform ( Android, iOS, Js, Jvm, Linux) using [KSP](https://github.com/google/ksp) and [Ktor clients](https://ktor.io/docs/getting-started-ktor-client.html) inspired by [Retrofit](https://square.github.io/retrofit/).
+3. [Ktor](https://github.com/Foso/Ktorfit): Ktorfit is a HTTP client/Kotlin Symbol Processor for Kotlin Multiplatform ( Android, iOS, Js, Jvm, Linux) using [KSP](https://github.com/google/ksp) and [Ktor clients](https://ktor.io/docs/getting-started-ktor-client.html) inspired by [Retrofit](https://square.github.io/retrofit/).
   
-4. [Timber]([GitHub - JakeWharton/timber: A logger with a small, extensible API which provides utility on top of Android&#39;s normal Log class.](https://github.com/JakeWharton/timber)): This is a logger with a small, extensible API which provides utility on top of Android's normal `Log` class.
+4. [Timber](https://github.com/JakeWharton/timber): This is a logger with a small, extensible API which provides utility on top of Android's normal `Log` class.
   
-5. [Coroutines]([Coroutines | Kotlin Documentation](https://kotlinlang.org/docs/coroutines-overview.html)): concurrency design pattern used on Android to simplify code that executes asynchronously.
+5. [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html): concurrency design pattern used on Android to simplify code that executes asynchronously.
   
 6. [Material 3](https://m3.material.io/):  latest version of Google’s open-source design system.
   
