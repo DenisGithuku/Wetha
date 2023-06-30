@@ -8,11 +8,12 @@ import com.githukudenis.feature_weather_info.data.local.ConnectionProviderImpl
 import com.githukudenis.feature_weather_info.data.local.DefaultLocationClient
 import com.githukudenis.feature_weather_info.data.local.LocationClient
 import com.githukudenis.feature_weather_info.data.local.UserPrefsRepositoryImpl
+import com.githukudenis.feature_weather_info.data.local.WeatherInfoReceiver
 import com.githukudenis.feature_weather_info.data.repository.RemoteWeatherDataSource
 import com.githukudenis.feature_weather_info.data.repository.UserPrefsRepository
 import com.githukudenis.feature_weather_info.domain.WeatherRepository
 import com.githukudenis.feature_weather_info.ui.full_report.DailyWeatherViewModel
-import com.githukudenis.feature_weather_info.ui.today.CurrentWeatherViewModel
+import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -43,7 +44,7 @@ val weatherModule = module {
     }
 
     single<UserPrefsRepository> {
-        UserPrefsRepositoryImpl(androidContext(), get())
+        UserPrefsRepositoryImpl(androidContext())
     }
 
     single {
@@ -55,8 +56,8 @@ val weatherModule = module {
         )
     }
 
-    viewModel<CurrentWeatherViewModel> {
-        CurrentWeatherViewModel(get(), get(), get())
+    viewModel<TodayViewModel> {
+        TodayViewModel(get(), get(), get())
     }
 
     viewModel<DailyWeatherViewModel> {
@@ -92,5 +93,9 @@ val weatherModule = module {
 
     single<ConnectionProvider> {
         ConnectionProviderImpl(androidContext(), get())
+    }
+
+    single<WeatherInfoReceiver> {
+        WeatherInfoReceiver()
     }
 }

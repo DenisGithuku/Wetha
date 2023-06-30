@@ -38,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -94,12 +95,12 @@ import kotlin.math.roundToInt
 
 @Composable
 fun TodayRoute(
-    currentWeatherViewModel: CurrentWeatherViewModel,
+    todayViewModel: TodayViewModel,
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
     onViewFullReport: () -> Unit
 ) {
-    val uiState by currentWeatherViewModel.state.collectAsStateWithLifecycle()
+    val uiState by todayViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = SnackbarHostState()
 
     Scaffold(
@@ -120,7 +121,7 @@ fun TodayRoute(
                     LoadingScreen(
                         shouldAskForUnits = currentState.shouldAskForUnits,
                         onSelectUnits = { units ->
-                            currentWeatherViewModel.onEvent(
+                            todayViewModel.onEvent(
                                 TodayUiEvent.ChangeUnits(units)
                             )
                         }
@@ -132,12 +133,15 @@ fun TodayRoute(
                         snackbarHostState = snackbarHostState,
                         todayUiState = currentState.todayUiState,
                         appTheme = appTheme,
+                        onToggleReminders = {
+                            todayViewModel.onEvent(TodayUiEvent.ToggleReminders(it))
+                        },
                         onChangeUnits = {
-                            currentWeatherViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                            todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
                         },
                         onChangeTheme = onChangeAppTheme,
                         onShowUserMessage = { messageId, messageType ->
-                            currentWeatherViewModel.onEvent(
+                            todayViewModel.onEvent(
                                 TodayUiEvent.OnShowUserMessage(
                                     messageId,
                                     messageType
@@ -153,7 +157,7 @@ fun TodayRoute(
                         error = currentState.userMessages
                             .first(),
                         onRetry = {
-                            currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
+                            todayViewModel.onEvent(TodayUiEvent.Retry)
                         }
                     )
                 }
@@ -205,6 +209,7 @@ private fun LoadedScreen(
     snackbarHostState: SnackbarHostState,
     todayUiState: TodayUiState,
     appTheme: Theme,
+    onToggleReminders: (Boolean) -> Unit,
     onChangeUnits: (Units) -> Unit,
     onChangeTheme: (Theme) -> Unit,
     onShowUserMessage: (Int, MessageType) -> Unit,
@@ -279,6 +284,29 @@ private fun LoadedScreen(
                                 Text(it.name.lowercase().replaceFirstChar { it.uppercase() })
                             })
                     }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Allow weather notifications",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            text = "Sends notifications with wetha info in the morning.",
+                            style = MaterialTheme.typography.labelSmall
+                            )
+                    }
+                    Switch(
+                        modifier = Modifier.weight(1f),
+                        checked = todayUiState.remindersEnabled, onCheckedChange = {
+                        onToggleReminders(it)
+                    })
                 }
             }
         }
@@ -643,9 +671,11 @@ private fun LoadingScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize(),
+    Column(
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center) {
+        verticalArrangement = Arrangement.Center
+    ) {
         JumpingBubblesIndicator()
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Fetching updates...")
@@ -737,6 +767,7 @@ fun TodayRoutePreview() {
             onShowUserMessage = { id, type -> },
             snackbarHostState = SnackbarHostState(),
             onChangeUnits = {},
+            onToggleReminders = {},
             onViewFullReport = {}
         )
     }

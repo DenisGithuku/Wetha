@@ -9,7 +9,7 @@ import androidx.core.app.NotificationCompat
 
 private const val notificationChannelId: String = "weather_reminders"
 
-class WeatherInfoReminder : BroadcastReceiver() {
+class WeatherInfoReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         intent?.extras?.getString("message")?.let { message ->
             sendNotification(context, message)

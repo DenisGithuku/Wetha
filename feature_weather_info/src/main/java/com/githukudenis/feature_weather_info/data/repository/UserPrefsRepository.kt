@@ -9,12 +9,15 @@ interface UserPrefsRepository {
     suspend fun changeUnits(units: Units)
 
     suspend fun changeLocation(location: Pair<Double, Double>)
+
+    suspend fun toggleUpdateReminders(enabled: Boolean)
 }
 
 data class UserPrefs(
     val theme: Theme? = Theme.LIGHT,
     val units: Units? = null,
-    val location: Pair<Double, Double>? = null
+    val location: Pair<Double, Double>? = null,
+    val updatesEnabled: Boolean = false,
 )
 
 enum class Theme {

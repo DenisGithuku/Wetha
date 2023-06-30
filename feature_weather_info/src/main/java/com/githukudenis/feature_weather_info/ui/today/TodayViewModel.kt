@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class CurrentWeatherViewModel(
+class TodayViewModel(
     private val weatherRepository: WeatherRepository,
     private val userPrefsRepository: UserPrefsRepository,
     private val connectionProvider: ConnectionProvider
@@ -45,7 +45,10 @@ class CurrentWeatherViewModel(
                                     }
                                 } else {
                                     todayUiState.update { oldState ->
-                                        oldState.copy(selectedUnits = prefs.units)
+                                        oldState.copy(
+                                            selectedUnits = prefs.units,
+                                            remindersEnabled = prefs.updatesEnabled
+                                        )
                                     }
                                     prefs.location?.let { loc ->
                                         val location = Location("").apply {
@@ -56,7 +59,7 @@ class CurrentWeatherViewModel(
 
                                         getCurrentWeatherData(
                                             location,
-                                            units = prefs.units
+                                            prefs.units
                                         )
                                     }
                                 }
@@ -120,6 +123,25 @@ class CurrentWeatherViewModel(
 
             is TodayUiEvent.Retry -> {
                 initialize()
+            }
+
+            is TodayUiEvent.ToggleReminders -> {
+                toggleReminders(event.enabled)
+            }
+        }
+    }
+
+    private fun toggleReminders(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.toggleUpdateReminders(enabled)
+            val updatedState =
+                todayUiState.value.copy(
+                    remindersEnabled = enabled,
+                )
+            state.update {
+                TodayScreenState.Loaded(
+                    updatedState
+                )
             }
         }
     }
