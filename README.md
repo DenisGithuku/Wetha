@@ -28,12 +28,12 @@ Note: Wetha requires an active internet connection to fetch the most accurate an
 **Today**
 
 <p>
-  <img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/a37e6b13-e6da-4c39-a9e4-2ba116052ca8" width = "50%" height = "50%" />
-  <img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/bc8e9937-1e54-42fb-b4de-a2550185e403" width = "50%" height = "50%"/>
+  <img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/b52abd34-1187-498f-bd05-e146abc3a9ad" width = "50%" height = "50%" />
+  <img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/b321b9e1-8064-4753-9945-209bb1431eb5" width = "50%" height = "50%"/>
 </p>
 **Daily updates**
 <p>
-<img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/21bb67aa-ba10-476a-97ec-d265a4249d61" width = "50%" height = "50%" />
+<img src = "https://github.com/DenisGithuku/Wetha/assets/47632042/8c12e45c-fd2f-43cd-bdce-e08d16c99e35" width = "50%" height = "50%" />
 </p>
 
 **Installation**
