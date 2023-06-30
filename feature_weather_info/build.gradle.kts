@@ -132,6 +132,10 @@ dependencies {
 
     implementation(libs.timber)
 
+    implementation(libs.roomRuntime)
+    implementation(libs.roomKtx)
+    ksp(libs.roomCompiler)
+
     testImplementation(libs.composeJunitTest)
     testImplementation(libs.junitTest)
     testImplementation(libs.truthUnitTest)

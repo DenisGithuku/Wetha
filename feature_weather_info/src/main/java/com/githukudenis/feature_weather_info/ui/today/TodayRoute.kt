@@ -5,10 +5,8 @@ import android.graphics.PointF
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +26,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -37,9 +34,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -65,7 +64,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
@@ -88,74 +86,81 @@ import com.githukudenis.feature_weather_info.ui.today.components.TopRow
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.util.WeatherIconMapper
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
 fun TodayRoute(
-    snackbarHostState: SnackbarHostState,
-    currentWeatherViewModel: CurrentWeatherViewModel,
+    todayViewModel: TodayViewModel,
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
     onViewFullReport: () -> Unit
 ) {
-    val uiState by currentWeatherViewModel.state.collectAsStateWithLifecycle()
+    val uiState by todayViewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = SnackbarHostState()
 
-    Crossfade(
-        targetState = uiState,
-        label = "screen_state",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        )
-    ) {
-        when (val currentState = it) {
-            is TodayScreenState.Loading -> {
-                LoadingScreen(
-                    shouldAskForUnits = currentState.shouldAskForUnits,
-                    onSelectUnits = { units ->
-                        currentWeatherViewModel.onEvent(
-                            TodayUiEvent.ChangeUnits(units)
-                        )
-                    }
-                )
-            }
-
-            is TodayScreenState.Loaded -> {
-                LoadedScreen(
-                    snackbarHostState = snackbarHostState,
-                    todayUiState = currentState.todayUiState,
-                    appTheme = appTheme,
-                    onChangeUnits = {
-                        currentWeatherViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
-                    },
-                    onChangeTheme = onChangeAppTheme,
-                    onShowUserMessage = { messageId, messageType ->
-                        currentWeatherViewModel.onEvent(
-                            TodayUiEvent.OnShowUserMessage(
-                                messageId,
-                                messageType
+    Scaffold(
+        snackbarHost = {
+            snackbarHostState
+        }
+    ) { contentPadding ->
+        Crossfade(
+            targetState = uiState,
+            label = "screen_state",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        ) {
+            when (val currentState = it) {
+                is TodayScreenState.Loading -> {
+                    LoadingScreen(
+                        shouldAskForUnits = currentState.shouldAskForUnits,
+                        onSelectUnits = { units ->
+                            todayViewModel.onEvent(
+                                TodayUiEvent.ChangeUnits(units)
                             )
-                        )
-                    },
-                    onViewFullReport = onViewFullReport
-                )
-            }
+                        }
+                    )
+                }
 
-            is TodayScreenState.Error -> {
-                ErrorScreen(
-                    error = currentState.userMessages
-                        .first(),
-                    onRetry = {
-                        currentWeatherViewModel.onEvent(TodayUiEvent.Retry)
-                    }
-                )
+                is TodayScreenState.Loaded -> {
+                    LoadedScreen(
+                        snackbarHostState = snackbarHostState,
+                        todayUiState = currentState.todayUiState,
+                        appTheme = appTheme,
+                        onToggleReminders = {
+                            todayViewModel.onEvent(TodayUiEvent.ToggleReminders(it))
+                        },
+                        onChangeUnits = {
+                            todayViewModel.onEvent(TodayUiEvent.ChangeUnits(it))
+                        },
+                        onChangeTheme = onChangeAppTheme,
+                        onShowUserMessage = { messageId, messageType ->
+                            todayViewModel.onEvent(
+                                TodayUiEvent.OnShowUserMessage(
+                                    messageId,
+                                    messageType
+                                )
+                            )
+                        },
+                        onViewFullReport = onViewFullReport
+                    )
+                }
+
+                is TodayScreenState.Error -> {
+                    ErrorScreen(
+                        error = currentState.userMessages
+                            .first(),
+                        onRetry = {
+                            todayViewModel.onEvent(TodayUiEvent.Retry)
+                        }
+                    )
+                }
             }
         }
     }
@@ -204,6 +209,7 @@ private fun LoadedScreen(
     snackbarHostState: SnackbarHostState,
     todayUiState: TodayUiState,
     appTheme: Theme,
+    onToggleReminders: (Boolean) -> Unit,
     onChangeUnits: (Units) -> Unit,
     onChangeTheme: (Theme) -> Unit,
     onShowUserMessage: (Int, MessageType) -> Unit,
@@ -222,9 +228,8 @@ private fun LoadedScreen(
     val modalBottomSheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-
-    LaunchedEffect(todayUiState.userMessages) {
-        if (todayUiState.userMessages.isNotEmpty()) {
+    if (todayUiState.userMessages.isNotEmpty()) {
+        LaunchedEffect(snackbarHostState) {
             val userMessage = todayUiState.userMessages.first()
             snackbarHostState.showSnackbar(
                 message = userMessage.description ?: return@LaunchedEffect,
@@ -233,7 +238,6 @@ private fun LoadedScreen(
             userMessage.id?.let { onShowUserMessage(it, userMessage.messageType) }
         }
     }
-
     if (modalBottomSheetState.isVisible) {
         ModalBottomSheet(
             sheetState = modalBottomSheetState,
@@ -281,6 +285,29 @@ private fun LoadedScreen(
                             })
                     }
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Allow weather notifications",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            text = "Sends notifications with wetha info in the morning.",
+                            style = MaterialTheme.typography.labelSmall
+                            )
+                    }
+                    Switch(
+                        modifier = Modifier.weight(1f),
+                        checked = todayUiState.remindersEnabled, onCheckedChange = {
+                        onToggleReminders(it)
+                    })
+                }
             }
         }
     }
@@ -296,8 +323,8 @@ private fun LoadedScreen(
                     )
                 )
             )
-            .systemBarsPadding()
             .padding(12.dp)
+            .systemBarsPadding()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -325,7 +352,8 @@ private fun LoadedScreen(
         icon?.let { iconId ->
             CurrentWeatherItem(
                 icon = iconId,
-                temp = todayUiState.currentWeatherState.temperature.toString(),
+                temp = todayUiState.currentWeatherState.temperature?.roundToInt().toString(),
+                selectedUnits = todayUiState.selectedUnits ?: Units.STANDARD,
                 main = todayUiState.currentWeatherState.main.toString()
             )
         }
@@ -340,19 +368,37 @@ private fun LoadedScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 maxItemsInEachRow = 3,
             ) {
-                todayUiState.currentWeatherState.temperature?.let {
+                todayUiState.currentWeatherState.temperature?.let { temp ->
+                    val value = buildAnnotatedString {
+                        append(temp.roundToInt().toString())
+                        val formattedUnits =
+                            generateUnits(todayUiState.selectedUnits ?: Units.STANDARD)
+
+                        if (todayUiState.selectedUnits == Units.METRIC) {
+                            withStyle(
+                                SpanStyle(
+                                    baselineShift = BaselineShift.Superscript
+                                )
+                            ) {
+                                append("o")
+                            }
+                        }
+                        append(formattedUnits.first)
+
+                    }
                     WeatherInfoItem(
                         title = "Temp",
-                        value = it.toString(),
                         icon = R.drawable.ic_thermometer,
-                        tempInfoItem = true
+                        value = value.toString()
                     )
                 }
                 todayUiState.currentWeatherState.windSpeed?.let {
+                    val formattedUnits =
+                        generateUnits(todayUiState.selectedUnits ?: Units.STANDARD)
                     WeatherInfoItem(
                         title = "Wind",
                         icon = R.drawable.ic_wind_solid,
-                        value = "$it"
+                        value = "$it ${formattedUnits.second}"
                     )
                 }
                 todayUiState.currentWeatherState.humidity?.let {
@@ -396,6 +442,7 @@ private fun LoadedScreen(
         }
         HourlySection(
             hourLyForeCast = todayUiState.hourlyForeCastState.foreCast,
+            selectedUnits = todayUiState.selectedUnits ?: Units.STANDARD,
             onViewFullReport = onViewFullReport
         )
     }
@@ -413,10 +460,10 @@ private fun formatTime(pattern: String, time: Int): String {
     return parsedTime.format(formatter)
 }
 
-@OptIn(ExperimentalTextApi::class)
 @Composable
 fun HourlySection(
     hourLyForeCast: List<ForeCast>,
+    selectedUnits: Units,
     onViewFullReport: () -> Unit
 ) {
     Column(
@@ -427,7 +474,6 @@ fun HourlySection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            val interactionSource = remember { MutableInteractionSource() }
             Text(
                 text = "Today",
                 style = MaterialTheme.typography.titleMedium
@@ -531,12 +577,16 @@ fun HourlySection(
                         Text(
                             text = buildAnnotatedString {
                                 append("${weatherInfo.temperature?.roundToInt()}")
-                                withStyle(
-                                    SpanStyle(
-                                        baselineShift = BaselineShift.Superscript
-                                    )
-                                ) {
-                                    append("o")
+                                if (selectedUnits == Units.METRIC) {
+                                    withStyle(
+                                        SpanStyle(
+                                            baselineShift = BaselineShift.Superscript
+                                        )
+                                    ) {
+                                        append("o")
+                                    }
+                                } else {
+                                    append("F")
                                 }
                             },
                             style = MaterialTheme.typography.bodyMedium
@@ -621,8 +671,14 @@ private fun LoadingScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         JumpingBubblesIndicator()
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Fetching updates...")
     }
 }
 
@@ -679,6 +735,22 @@ private fun generatePoints(tempList: List<Float>, size: Size): List<Offset> {
     }
 }
 
+fun generateUnits(selectedUnits: Units = Units.STANDARD): Pair<String, String> {
+    return when (selectedUnits) {
+        Units.STANDARD -> {
+            Pair("K", "m/s")
+        }
+
+        Units.METRIC -> {
+            Pair("C", "m/s")
+        }
+
+        Units.IMPERIAL -> {
+            Pair("F", "m/h")
+        }
+    }
+}
+
 @Preview(
     device = "id:pixel_7", showSystemUi = false,
     showBackground = true,
@@ -695,6 +767,7 @@ fun TodayRoutePreview() {
             onShowUserMessage = { id, type -> },
             snackbarHostState = SnackbarHostState(),
             onChangeUnits = {},
+            onToggleReminders = {},
             onViewFullReport = {}
         )
     }

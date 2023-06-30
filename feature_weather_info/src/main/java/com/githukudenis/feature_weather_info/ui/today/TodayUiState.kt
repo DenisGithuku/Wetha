@@ -8,6 +8,7 @@ import java.time.LocalDate
 data class TodayUiState(
     val shouldAskForUnits: Boolean = false,
     val selectedUnits: Units? = null,
+    val remindersEnabled: Boolean = false,
     val locationState: LocationState = LocationState(),
     val currentWeatherState: CurrentWeatherState = CurrentWeatherState(),
     val hourlyForeCastState: HourlyForeCastState = HourlyForeCastState(),

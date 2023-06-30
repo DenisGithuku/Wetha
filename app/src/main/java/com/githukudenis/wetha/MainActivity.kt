@@ -1,9 +1,12 @@
 package com.githukudenis.wetha
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
@@ -18,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +29,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -43,7 +44,6 @@ import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.wetha.ui.theme.WethaTheme
 import com.githukudenis.wetha.util.LocationListenerWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import org.koin.androidx.compose.koinViewModel
@@ -53,6 +53,24 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val notificationChannel = NotificationChannel(
+                "weather_reminders",
+                "Weather update reminders",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+                .apply {
+                    importance = NotificationManager.IMPORTANCE_HIGH
+                    enableLights(true)
+                    setShowBadge(true)
+                    enableVibration(true)
+                }
+
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
 
         WindowCompat.setDecorFitsSystemWindows(
             window,
@@ -66,7 +84,7 @@ class MainActivity : ComponentActivity() {
         setupLocationRequestWorker(this)
 
         setContent {
-            val snackbarHostState = SnackbarHostState()
+
             val navHostController = rememberNavController()
             val permissionsState = rememberMultiplePermissionsState(
                 permissions = listOf(
@@ -99,7 +117,6 @@ class MainActivity : ComponentActivity() {
                                 onChangeAppTheme = { newTheme ->
                                     mainViewModel.onEvent(MainEvent.ChangeAppTheme(newTheme))
                                 },
-                                snackbarHostState = snackbarHostState,
                                 navHostController = navHostController,
                                 context = this
                             )

@@ -23,11 +23,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.githukudenis.feature_weather_info.R
+import com.githukudenis.feature_weather_info.data.repository.Units
+import com.githukudenis.feature_weather_info.ui.today.generateUnits
 
 @Composable
 fun CurrentWeatherItem(
     @DrawableRes icon: Int,
     temp: String,
+    selectedUnits: Units = Units.STANDARD,
     main: String
 ) {
 
@@ -52,10 +55,13 @@ fun CurrentWeatherItem(
         Text(
             text = buildAnnotatedString {
                 append(temp)
-                withStyle(style = degreeStyle) {
-                    append("o")
+                val formattedUnits = generateUnits(selectedUnits)
+                if(selectedUnits == Units.METRIC) {
+                    withStyle(style = degreeStyle) {
+                        append("o")
+                    }
                 }
-                append("C")
+                append(formattedUnits.first)
             },
             style = MaterialTheme.typography.headlineMedium
         )

@@ -14,20 +14,17 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.githukudenis.feature_weather_info.data.repository.Units
 
 @Composable
 fun WeatherInfoItem(
     title: String,
     value: String,
-    icon: Int,
-    tempInfoItem: Boolean = false
+    icon: Int? = null,
 ) {
     Column(
         modifier = Modifier.padding(12.dp),
@@ -38,34 +35,24 @@ fun WeatherInfoItem(
             text = title,
             style = MaterialTheme.typography.titleLarge
         )
-        Image(
-            painter = painterResource(id = icon),
-            contentDescription = title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(24.dp),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-        )
+        icon?.let { painterResource(id = it) }?.let {
+            Image(
+                painter = it,
+                contentDescription = title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+            )
+        }
         val degreeSpanStyle = SpanStyle(
             baselineShift = BaselineShift.Superscript,
             fontSize = 10.sp
         )
-        if (tempInfoItem) {
-            Text(
-                text = buildAnnotatedString {
-                    append(value)
-                    withStyle(degreeSpanStyle) {
-                        append("o")
-                    }
-                    append("C")
-                },
-                style = MaterialTheme.typography.bodyMedium
-            )
-        } else {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -73,6 +60,10 @@ fun WeatherInfoItem(
 @Composable
 fun WeatherInfoItemPreview() {
     MaterialTheme {
-        WeatherInfoItem(title = "Temp", value = "36", icon = 0, tempInfoItem = true)
+        WeatherInfoItem(
+            title = "Temp",
+            value = "36",
+            icon = 0,
+        )
     }
 }

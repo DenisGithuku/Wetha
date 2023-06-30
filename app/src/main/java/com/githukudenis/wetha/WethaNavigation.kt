@@ -1,7 +1,6 @@
 package com.githukudenis.wetha
 
 import android.content.Context
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -11,14 +10,13 @@ import com.githukudenis.feature_weather_info.data.repository.Theme
 import com.githukudenis.feature_weather_info.ui.full_report.DailyWeatherViewModel
 import com.githukudenis.feature_weather_info.ui.full_report.DailyUpdatesRoute
 import com.githukudenis.feature_weather_info.ui.today.TodayRoute
-import com.githukudenis.feature_weather_info.ui.today.CurrentWeatherViewModel
+import com.githukudenis.feature_weather_info.ui.today.TodayViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun WethaNavigator(
     appTheme: Theme,
     onChangeAppTheme: (Theme) -> Unit,
-    snackbarHostState: SnackbarHostState,
     navHostController: NavHostController,
     context: Context
 ) {
@@ -29,10 +27,9 @@ fun WethaNavigator(
         ) {
 
             composable(route = WethaDestination.Today.route) {
-                val currentWeatherViewModel: CurrentWeatherViewModel = koinViewModel()
+                val todayViewModel: TodayViewModel = koinViewModel()
                 TodayRoute(
-                    snackbarHostState = snackbarHostState,
-                    currentWeatherViewModel = currentWeatherViewModel,
+                    todayViewModel = todayViewModel,
                     appTheme = appTheme,
                     onChangeAppTheme = onChangeAppTheme,
                     onViewFullReport = {
