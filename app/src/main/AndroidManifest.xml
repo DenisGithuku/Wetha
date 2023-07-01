@@ -21,8 +21,8 @@
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx.startup"
             android:exported="false"
-            tools:replace="android:authorities"
-            tools:node="merge">
+            tools:node="merge"
+            tools:replace="android:authorities">
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup"
@@ -39,6 +39,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name="com.githukudenis.feature_weather_info.data.local.WeatherInfoReceiver" />
     </application>
 
 </manifest>
