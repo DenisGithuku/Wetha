@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -16,9 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -30,14 +34,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.githukudenis.feature_weather_info.R
+import com.githukudenis.feature_weather_info.common.UserMessage
 import com.githukudenis.feature_weather_info.data.api.model.Daily
 import com.githukudenis.feature_weather_info.data.repository.Units
+import com.githukudenis.feature_weather_info.ui.today.TodayUiEvent
 import com.githukudenis.feature_weather_info.ui.today.components.JumpingBubblesIndicator
 import com.githukudenis.feature_weather_info.ui.today.components.WeatherInfoItem
 import com.githukudenis.feature_weather_info.ui.today.generateUnits
@@ -77,7 +84,13 @@ fun DailyUpdatesRoute(
 
     when (val currentState = uiState.value) {
         is DailyUpdateState.Error -> {
-            Error()
+            Error(error = currentState.userMessages.first()) {
+                currentState.userMessages.first().id?.let { id ->
+                    DailyUpdatesEvent.OnRetry(
+                        id
+                    )
+                }?.let { dailyWeatherViewModel.onEvent(it) }
+            }
         }
 
         is DailyUpdateState.Loaded -> {
@@ -309,6 +322,40 @@ private fun WeatherItem(
 }
 
 @Composable
-private fun Error() {
+private fun Error(
+    error: UserMessage,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "Oops",
+            style = MaterialTheme.typography.headlineLarge
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = error.description ?: "An unknown error occurred",
+            style = MaterialTheme.typography.bodyMedium.copy(),
+            color = MaterialTheme.colorScheme.onBackground.copy(
+                alpha = 0.8f
+            ),
+            textAlign = TextAlign.Justify
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onRetry,
+            shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(
+                text = "Retry",
+            )
+        }
+    }
+
 
 }
