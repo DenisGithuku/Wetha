@@ -133,4 +133,12 @@ class DailyWeatherViewModel(
                 }
             }
     }
+
+    fun onEvent(event: DailyUpdatesEvent) {
+        when(event) {
+            is DailyUpdatesEvent.OnRetry -> {
+                getUpdates()
+            }
+        }
+    }
 }
